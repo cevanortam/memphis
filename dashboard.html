@@ -4,164 +4,74 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Lean Corner Dashboard</title>
-<link rel="stylesheet" href="css/shared.css">
-<!-- Chart.js + datalabels plugin -->
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <style>
-/* ── OUTER CHROME ─────────────────────────────────────────── */
-body { overflow-x: hidden; }
+:root{--navy:#0a1628;--navy-mid:#0f2040;--navy-light:#1a3058;--navy-card:#112035;--red:#cc0000;--red-h:#e60000;--white:#fff;--gray:#8899aa;--gray-l:#b0c0d0;--green:#22c55e;--border:rgba(255,255,255,.08);--r:6px;--fh:'Barlow Condensed',sans-serif;--fb:'Barlow',sans-serif}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--navy);color:var(--white);font-family:var(--fb);font-size:14px;min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:var(--navy)}::-webkit-scrollbar-thumb{background:var(--navy-light);border-radius:3px}
+a{text-decoration:none}
+.top-nav{background:var(--navy-mid);border-bottom:2px solid var(--red);display:flex;align-items:center;gap:8px;padding:0 16px;height:48px;position:sticky;top:0;z-index:100}
+.brand{font-family:var(--fh);font-size:20px;font-weight:800;letter-spacing:1px;color:var(--white);margin-right:12px}
+.top-nav a{color:var(--gray-l);font-size:13px;font-weight:600;padding:4px 10px;border-radius:4px;transition:all .15s}
+.top-nav a:hover,.top-nav a.active{background:var(--navy-light);color:var(--white)}
+.spacer{flex:1}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:var(--r);font-family:var(--fb);font-weight:600;font-size:12px;cursor:pointer;transition:all .15s;border:1px solid var(--border);background:transparent;color:var(--gray-l)}
+.btn:hover{background:var(--navy-light);color:var(--white)}
+input,select{background:var(--navy-mid);color:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:5px 8px;font-family:var(--fb);font-size:12px;outline:none;transition:border-color .15s}
+input:focus,select:focus{border-color:var(--red)}
+select option{background:var(--navy-mid)}
+#tc{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--navy-light);border-left:3px solid var(--green);border-radius:var(--r);padding:10px 16px;font-size:13px;color:var(--white);box-shadow:0 4px 16px rgba(0,0,0,.5);animation:si .2s ease;max-width:320px}
+.toast.err{border-color:var(--red)}
+@keyframes si{from{transform:translateX(30px);opacity:0}to{transform:translateX(0);opacity:1}}
+.spinner{width:22px;height:22px;border:2px solid var(--border);border-top-color:var(--red);border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.hidden{display:none!important}
 
-/* Dashboard header row */
-.dash-header {
-  background: var(--navy-mid);
-  border-bottom: 2px solid var(--red);
-  display: flex; align-items: center; gap: 0;
-  padding: 0;
-  position: sticky; top: 48px;
-  z-index: 90;
-  overflow-x: auto;
-  height: 44px;
-}
+/* Dash tabs */
+.dash-header{background:var(--navy-mid);border-bottom:2px solid var(--red);display:flex;align-items:center;height:44px;position:sticky;top:48px;z-index:90;overflow-x:auto}
+.dash-tabs{display:flex;height:100%}
+.dtab{height:100%;padding:0 18px;display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:700;font-size:13px;font-family:var(--fh);letter-spacing:.5px;text-transform:uppercase;color:var(--gray);border-right:1px solid var(--border);white-space:nowrap;transition:all .15s;position:relative}
+.dtab:hover{color:var(--white);background:rgba(255,255,255,.04)}
+.dtab.act{color:var(--white)}
+.dtab.act::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--tab-clr,var(--red))}
+.tdot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.hsp{flex:1}
+.fsb{background:transparent;border:1px solid var(--border);color:var(--gray-l);border-radius:var(--r);padding:4px 8px;cursor:pointer;font-size:13px;margin-right:12px;transition:all .15s}
+.fsb:hover{background:var(--navy-light);color:var(--white)}
 
-/* Customer tabs */
-.dash-tab {
-  height: 100%; padding: 0 20px;
-  display: flex; align-items: center; gap: 8px;
-  cursor: pointer; font-weight: 700; font-size: 13px;
-  font-family: var(--font-head); letter-spacing: .5px;
-  text-transform: uppercase; color: var(--gray);
-  border-right: 1px solid var(--border);
-  white-space: nowrap; transition: all .15s;
-  position: relative;
-}
-.dash-tab:hover { color: var(--white); background: rgba(255,255,255,.04); }
-.dash-tab.active { color: var(--white); }
-.dash-tab.active::after {
-  content: '';
-  position: absolute; bottom: 0; left: 0; right: 0;
-  height: 3px;
-  background: var(--tab-color, var(--red));
-}
-.dash-tab .tab-dot { width: 7px; height: 7px; border-radius: 50%; }
+/* Controls */
+.ctrl-bar{background:rgba(10,22,40,.97);border-bottom:1px solid var(--border);padding:8px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;position:sticky;top:92px;z-index:80}
+.gran-grp{display:flex;gap:2px;background:var(--navy-mid);border-radius:var(--r);padding:2px}
+.gbtn{padding:5px 12px;border-radius:4px;cursor:pointer;font-size:12px;font-weight:600;color:var(--gray-l);transition:all .15s;border:none;background:transparent}
+.gbtn.act{background:var(--red);color:var(--white)}
+.dr{display:flex;align-items:center;gap:6px}
+.dr label{font-size:12px;font-weight:600;color:var(--gray-l);text-transform:none;margin:0;display:inline}
+.dr input{width:130px}
+.tabl{font-family:var(--fh);font-size:16px;font-weight:700;margin-left:8px;color:var(--white)}
 
-/* Controls bar */
-.controls-bar {
-  background: rgba(10,22,40,0.96);
-  border-bottom: 1px solid var(--border);
-  padding: 8px 20px;
-  display: flex; align-items: center; gap: 12px;
-  flex-wrap: wrap;
-  position: sticky; top: 92px; z-index: 80;
-}
-.granularity-group { display: flex; gap: 2px; background: var(--navy-mid); border-radius: var(--radius); padding: 2px; }
-.gran-btn {
-  padding: 5px 12px; border-radius: 4px; cursor: pointer;
-  font-size: 12px; font-weight: 600; color: var(--gray-light);
-  transition: all .15s; border: none; background: transparent;
-}
-.gran-btn.active { background: var(--red); color: var(--white); }
-
-.date-range { display: flex; align-items: center; gap: 6px; }
-.date-range input { width: 130px; font-size: 12px; padding: 5px 8px; }
-.date-range label { font-size: 12px; font-weight: 600; color: var(--gray-light); text-transform: none; margin: 0; }
-
-/* ── DASHBOARD GRID ───────────────────────────────────────── */
-.dash-view { padding: 16px; }
-.dash-grid {
-  display: grid;
-  gap: 12px;
-}
-.chart-panel {
-  background: var(--navy-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  display: flex; flex-direction: column;
-  overflow: hidden;
-  min-height: 200px;
-}
-.chart-panel-header {
-  display: flex; align-items: flex-start; justify-content: space-between;
-  padding: 10px 14px 6px;
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-}
-.chart-panel-title {
-  font-family: var(--font-head);
-  font-weight: 700; font-size: 14px;
-  text-transform: uppercase; letter-spacing: .5px;
-  color: var(--white);
-}
-.chart-panel-target {
-  font-size: 11px; color: var(--gray);
-  margin-top: 2px;
-}
-.chart-panel-avg {
-  font-family: var(--font-head);
-  font-size: 22px; font-weight: 800;
-  text-align: right; line-height: 1;
-}
-.chart-panel-avg .avg-label { font-size: 10px; color: var(--gray); font-weight: 400; display: block; font-family: var(--font-body); }
-.chart-panel-body {
-  flex: 1; padding: 10px 12px 8px;
-  position: relative; min-height: 0;
-}
-.chart-panel-body canvas { display: block; }
-
-/* KPI gauge row (for 1-cell panels) */
-.gauge-row {
-  display: flex; align-items: center; justify-content: center;
-  padding: 12px; flex: 1;
-}
-.kpi-gauge {
-  position: relative;
-  width: 100px; height: 55px;
-}
-.kpi-gauge svg { width: 100%; height: auto; }
-.kpi-val {
-  position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
-  font-family: var(--font-head); font-weight: 800; font-size: 18px;
-  color: var(--white); white-space: nowrap;
-}
-
-/* Loading / error states */
-.panel-loading {
-  display: flex; align-items: center; justify-content: center;
-  flex: 1; gap: 8px; color: var(--gray); font-size: 13px;
-}
-.panel-error { color: #ff6666; font-size: 12px; padding: 12px; }
-
-/* Empty dashboard */
-.dash-empty {
-  text-align: center; padding: 80px 20px;
-  color: var(--gray);
-}
-.dash-empty h2 { font-family: var(--font-head); font-size: 24px; color: var(--gray-light); margin: 12px 0 8px; }
-
-/* Dashboard branding */
-.dash-brand {
-  display: flex; align-items: center; gap: 10px;
-  padding: 0 16px;
-  flex-shrink: 0;
-}
-.dash-brand .brand-title {
-  font-family: var(--font-head); font-size: 22px; font-weight: 800;
-  letter-spacing: 1px; color: var(--white); text-transform: uppercase;
-}
-.spacer-v { flex: 1; }
-
-/* Fullscreen-friendly tweaks */
-.fullscreen-btn {
-  background: transparent; border: 1px solid var(--border);
-  color: var(--gray-light); border-radius: var(--radius);
-  padding: 4px 8px; cursor: pointer; font-size: 13px;
-  transition: all .15s;
-}
-.fullscreen-btn:hover { background: var(--navy-light); color: var(--white); }
+/* Grid */
+.dash-view{padding:14px}
+.dash-grid{display:grid;gap:10px}
+.panel{background:var(--navy-card);border:1px solid var(--border);border-radius:var(--r);display:flex;flex-direction:column;overflow:hidden;min-height:220px}
+.ph{display:flex;align-items:flex-start;justify-content:space-between;padding:10px 14px 6px;border-bottom:1px solid var(--border);flex-shrink:0}
+.ptit{font-family:var(--fh);font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:.5px;color:var(--white)}
+.ptgt{font-size:11px;color:var(--gray);margin-top:2px}
+.pavg{font-family:var(--fh);font-size:24px;font-weight:800;text-align:right;line-height:1}
+.pavg .albl{font-size:10px;color:var(--gray);font-weight:400;display:block;font-family:var(--fb)}
+.pbody{flex:1;padding:8px 10px 6px;position:relative;min-height:0}
+.pbody canvas{display:block;width:100%!important}
+.pload{display:flex;align-items:center;justify-content:center;flex:1;gap:8px;color:var(--gray);font-size:13px;padding:20px}
+.perr{color:#ff6666;font-size:12px;padding:12px}
+.empty-cell{background:rgba(255,255,255,.015);border:1px dashed rgba(255,255,255,.05);border-radius:var(--r);min-height:220px}
+.dash-empty{text-align:center;padding:80px 20px;color:var(--gray)}
+.dash-empty h2{font-family:var(--fh);font-size:24px;color:var(--gray-l);margin:12px 0 8px}
 </style>
 </head>
 <body>
-
 <nav class="top-nav">
   <a class="brand" href="dashboard.html">📊 LEAN CORNER</a>
   <a href="dashboard.html" class="active">Dashboard</a>
@@ -170,285 +80,202 @@ body { overflow-x: hidden; }
   <span class="spacer"></span>
 </nav>
 
-<!-- Customer tab row -->
-<div class="dash-header" id="dash-header">
-  <div id="dash-tabs"></div>
-  <div class="spacer-v"></div>
-  <button class="fullscreen-btn" onclick="toggleFullscreen()" style="margin-right:12px" title="Fullscreen">⛶</button>
+<div class="dash-header">
+  <div class="dash-tabs" id="dash-tabs"></div>
+  <div class="hsp"></div>
+  <button class="fsb" onclick="toggleFS()" title="Fullscreen">⛶</button>
 </div>
 
-<!-- Controls bar -->
-<div class="controls-bar">
-  <div class="granularity-group">
-    <button class="gran-btn active" data-gran="day"   onclick="setGranularity('day',   this)">Day</button>
-    <button class="gran-btn"        data-gran="week"  onclick="setGranularity('week',  this)">Week</button>
-    <button class="gran-btn"        data-gran="month" onclick="setGranularity('month', this)">Month</button>
-    <button class="gran-btn"        data-gran="year"  onclick="setGranularity('year',  this)">Year</button>
+<div class="ctrl-bar">
+  <div class="gran-grp">
+    <button class="gbtn act" onclick="setGran('day',this)">Day</button>
+    <button class="gbtn" onclick="setGran('week',this)">Week</button>
+    <button class="gbtn" onclick="setGran('month',this)">Month</button>
+    <button class="gbtn" onclick="setGran('year',this)">Year</button>
   </div>
-  <div class="date-range">
-    <label>From</label>
-    <input type="date" id="filter-from" onchange="refreshCurrentTab()">
-    <label>To</label>
-    <input type="date" id="filter-to" onchange="refreshCurrentTab()">
-    <button class="btn btn-ghost btn-sm" onclick="clearDateFilter()">All</button>
+  <div class="dr">
+    <label>From</label><input type="date" id="f-from" onchange="refresh()">
+    <label>To</label><input type="date" id="f-to" onchange="refresh()">
+    <button class="btn" onclick="clearDates()">All Dates</button>
   </div>
-  <button class="btn btn-secondary btn-sm" onclick="refreshCurrentTab()">↺ Refresh</button>
-  <span id="dash-tab-label" style="font-family:var(--font-head);font-size:16px;font-weight:700;margin-left:8px;color:var(--white)"></span>
+  <button class="btn" onclick="refresh()">↺ Refresh</button>
+  <span class="tabl" id="tabl"></span>
 </div>
 
-<!-- Dashboard content area -->
 <div class="dash-view" id="dash-view">
-  <div class="dash-empty" id="no-tabs-state">
+  <div class="dash-empty" id="no-tabs">
     <div style="font-size:56px">📊</div>
-    <h2>No Dashboards Configured</h2>
+    <h2>No Dashboards Yet</h2>
     <p>Go to <a href="setup.html" style="color:var(--red)">Setup</a> to add customer tabs and metrics.</p>
   </div>
-  <div id="tab-content"></div>
+  <div id="content"></div>
 </div>
+<div id="tc"></div>
 
-<div id="toast-container"></div>
-
-<script src="js/shared.js"></script>
 <script>
-// Register datalabels plugin globally
 Chart.register(ChartDataLabels);
 
-// ── State ─────────────────────────────────────────────────────
-let allTabs = [];
-let currentTabKey = null;
-let granularity = 'day';
-let tabDataCache = {}; // tabKey -> { metrics, data }
+const DEF_API='https://script.google.com/macros/s/AKfycbwrPedBNwsYajOrU8WqrLPxf1Su4iEOd97YWpY3z-nLW9GqGe3tfu3kN2VoLm2DCgWg/exec';
+function apiUrl(){return localStorage.getItem('lc_api_url')||DEF_API;}
+const API={
+  async get(a,p={}){const u=apiUrl();const q=new URLSearchParams({action:a,...p}).toString();const r=await fetch(`${u}?${q}`);const j=await r.json();if(j.error)throw new Error(j.error);return j;},
+  async post(b){const r=await fetch(apiUrl(),{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(b)});const j=await r.json();if(j.error)throw new Error(j.error);return j;}
+};
+function toast(m,t='ok'){let c=document.getElementById('tc');const el=document.createElement('div');el.className='toast'+(t==='err'?' err':'');el.textContent=m;c.appendChild(el);setTimeout(()=>el.remove(),3500);}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function fmtVal(v,fmt){if(v===null||v===undefined||isNaN(v))return'—';switch(fmt){case'percent':return v.toFixed(2)+'%';case'integer':return Math.round(v).toLocaleString();default:return v.toFixed(2);}}
 
-// ── Init ──────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', async () => {
-  // Seed date filter: last 13 months by default
-  const today = new Date();
-  const from = new Date(today);
-  from.setMonth(from.getMonth() - 13);
-  document.getElementById('filter-to').value = DateUtils.toISO(today);
-  document.getElementById('filter-from').value = DateUtils.toISO(from);
+// Date utils
+const DU={
+  toISO(d){if(!d)return null;if(d instanceof Date){const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');return`${y}-${m}-${dd}`;}return String(d).substring(0,10);},
+  parse(s){if(!s)return null;const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d);},
+  label(iso,g){const d=this.parse(iso);if(!d)return iso;switch(g){case'day':return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});case'week':{const w=this.week(d);return`W${w} '${String(d.getFullYear()).slice(2)}`;}case'month':return d.toLocaleDateString('en-US',{month:'short',year:'2-digit'});case'year':return String(d.getFullYear());default:return iso;}},
+  week(d){const t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));const dn=t.getUTCDay()||7;t.setUTCDate(t.getUTCDate()+4-dn);const ys=new Date(Date.UTC(t.getUTCFullYear(),0,1));return Math.ceil(((t-ys)/86400000+1)/7);},
+  gkey(iso,g){const d=this.parse(iso);if(!d)return iso;switch(g){case'day':return iso;case'week':{const w=this.week(d);return`${d.getFullYear()}-W${String(w).padStart(2,'0')}`;}case'month':return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;case'year':return`${d.getFullYear()}`;}},
+  aggregate(pts,g,fn='avg'){
+    const grp={},ord=[];
+    pts.forEach(p=>{const k=this.gkey(p.date,g);if(!grp[k]){grp[k]=[];ord.push(k);}grp[k].push(p.value);});
+    const seen=new Set();const keys=ord.filter(k=>seen.has(k)?false:(seen.add(k),true));keys.sort();
+    return keys.map(k=>{const v=grp[k].filter(x=>!isNaN(x));let val;if(!v.length)val=null;else if(fn==='sum')val=v.reduce((a,b)=>a+b,0);else val=v.reduce((a,b)=>a+b,0)/v.length;return{gk:k,value:val!=null?Math.round(val*100)/100:null};});
+  }
+};
 
+let allTabs=[],curTab=null,gran='day',cache={};
+
+document.addEventListener('DOMContentLoaded',async()=>{
+  const today=DU.toISO(new Date());const from=new Date();from.setMonth(from.getMonth()-13);
+  document.getElementById('f-to').value=today;document.getElementById('f-from').value=DU.toISO(from);
   await loadConfig();
 });
 
-async function loadConfig() {
-  try {
-    const cfg = await API.get('getConfig');
-    allTabs = cfg.tabs || [];
-    Config.set(cfg);
-  } catch {
-    allTabs = Config.getTabs();
-    if (!allTabs.length) {
-      toast('Not connected to server. Check Setup.', 'error');
-    }
-  }
+async function loadConfig(){
+  try{const c=await API.get('getConfig');allTabs=c.tabs||[];localStorage.setItem('lc_cfg',JSON.stringify(c));}
+  catch{try{allTabs=JSON.parse(localStorage.getItem('lc_cfg'))?.tabs||[];}catch{allTabs=[];}if(!allTabs.length)toast('Not connected to server — check Setup','err');}
   renderTabBar();
-  if (allTabs.length) selectTab(allTabs[0].key);
-  else document.getElementById('no-tabs-state').style.display = '';
+  if(allTabs.length){document.getElementById('no-tabs').style.display='none';selTab(allTabs[0].key);}
 }
 
-// ── TAB BAR ───────────────────────────────────────────────────
-function renderTabBar() {
-  const container = document.getElementById('dash-tabs');
-  container.innerHTML = allTabs.map(t => `
-    <div class="dash-tab" data-key="${t.key}" style="--tab-color:${t.color||'var(--red)'}" onclick="selectTab('${t.key}')">
-      <div class="tab-dot" style="background:${t.color||'var(--red)'}"></div>
-      ${escHtml(t.name)}
-    </div>
-  `).join('');
-  if (!allTabs.length) document.getElementById('no-tabs-state').style.display = '';
+function renderTabBar(){
+  document.getElementById('dash-tabs').innerHTML=allTabs.map(t=>`
+    <div class="dtab" data-k="${t.key}" style="--tab-clr:${t.color||'var(--red)'}" onclick="selTab('${t.key}')">
+      <div class="tdot" style="background:${t.color||'var(--red)'}"></div>${esc(t.name)}
+    </div>`).join('');
 }
 
-async function selectTab(key) {
-  currentTabKey = key;
-  document.querySelectorAll('.dash-tab').forEach(t => t.classList.toggle('active', t.dataset.key === key));
-  const tab = allTabs.find(t => t.key === key);
-  document.getElementById('dash-tab-label').textContent = tab?.name || '';
-  document.getElementById('no-tabs-state').style.display = 'none';
-  await loadTabData(key);
+async function selTab(k){
+  curTab=k;
+  document.querySelectorAll('.dtab').forEach(t=>t.classList.toggle('act',t.dataset.k===k));
+  const tab=allTabs.find(t=>t.key===k);
+  document.getElementById('tabl').textContent=tab?.name||'';
+  document.getElementById('no-tabs').style.display='none';
+  await loadData(k);
 }
 
-// ── DATA LOADING ──────────────────────────────────────────────
-async function loadTabData(tabKey) {
-  const content = document.getElementById('tab-content');
-  content.innerHTML = '<div class="panel-loading" style="padding:60px"><span class="spinner"></span> Loading data…</div>';
-
-  try {
-    // Load metrics + all data in parallel
-    const [metricsRes, dataRes] = await Promise.all([
-      API.get('getMetrics', { tab: tabKey }),
-      API.get('getAllData', { tab: tabKey }),
-    ]);
-    tabDataCache[tabKey] = {
-      metrics: metricsRes.metrics || [],
-      rawData: dataRes.data || {},
-    };
-  } catch (e) {
-    content.innerHTML = `<div class="panel-error">Error loading data: ${e.message}<br><small>Check that your Apps Script URL is configured in Setup.</small></div>`;
-    return;
-  }
-
-  renderDashboard(tabKey);
+async function loadData(k){
+  const el=document.getElementById('content');
+  el.innerHTML='<div class="pload" style="padding:60px"><span class="spinner"></span><span style="margin-left:10px;color:var(--gray)">Loading…</span></div>';
+  try{
+    const[mr,dr]=await Promise.all([API.get('getMetrics',{tab:k}),API.get('getAllData',{tab:k})]);
+    cache[k]={metrics:mr.metrics||[],raw:dr.data||{}};
+  }catch(e){el.innerHTML=`<div class="perr" style="padding:24px">Error: ${esc(e.message)}<br><small>Check your Apps Script URL in Setup.</small></div>`;return;}
+  renderDash(k);
 }
 
-function refreshCurrentTab() {
-  if (currentTabKey) loadTabData(currentTabKey);
-}
+function refresh(){if(curTab&&cache[curTab])renderDash(curTab);}
 
-// ── RENDER ────────────────────────────────────────────────────
-function renderDashboard(tabKey) {
-  const content = document.getElementById('tab-content');
-  const cache = tabDataCache[tabKey];
-  if (!cache) return;
+function renderDash(k){
+  const el=document.getElementById('content');
+  const c=cache[k];if(!c)return;
+  const{metrics,raw}=c;const tab=allTabs.find(t=>t.key===k);
+  if(!metrics.length){el.innerHTML='<div class="dash-empty"><div style="font-size:40px">📋</div><h2>No Metrics</h2><p>Add metrics in <a href="setup.html" style="color:var(--red)">Setup</a>.</p></div>';return;}
 
-  const { metrics, rawData } = cache;
-  const tab = allTabs.find(t => t.key === tabKey);
+  const saved=(()=>{try{return JSON.parse(localStorage.getItem('lc_layout_'+k));}catch{return null;}})();
+  const cols=saved?.cols||tab?.gridCols||3;
+  const rows=saved?.rows||tab?.gridRows||Math.ceil(metrics.length/3);
+  const lmap=saved?.layout||tab?.layout||{};
+  const total=cols*rows;
 
-  if (!metrics.length) {
-    content.innerHTML = `<div class="dash-empty"><div style="font-size:40px">📋</div><h2>No Metrics Configured</h2><p>Add metrics in <a href="setup.html" style="color:var(--red)">Setup</a>.</p></div>`;
-    return;
-  }
+  el.innerHTML=`<div class="dash-grid" id="dgrid" style="grid-template-columns:repeat(${cols},1fr)"></div>`;
+  const grid=document.getElementById('dgrid');
 
-  // Load layout from local storage or tab definition
-  const layoutStr = localStorage.getItem('lc_layout_' + tabKey);
-  const savedLayout = layoutStr ? JSON.parse(layoutStr) : null;
-  const gridCols = savedLayout?.cols || tab?.gridCols || 3;
-  const gridRows = savedLayout?.rows || tab?.gridRows || Math.ceil(metrics.length / 3);
-  const layoutMap = savedLayout?.layout || tab?.layout || {};
-
-  // Build ordered metric keys from layout
-  const totalCells = gridCols * gridRows;
-  const placedKeys = [];
-  for (let i = 0; i < totalCells; i++) {
-    if (layoutMap[i]) placedKeys.push(layoutMap[i]);
-  }
-  // Add unplaced at end
-  metrics.forEach(m => { if (!placedKeys.includes(m.key)) placedKeys.push(m.key); });
-
-  // Build grid
-  content.innerHTML = `<div class="dash-grid" id="rendered-grid" style="grid-template-columns:repeat(${gridCols},1fr)"></div>`;
-  const grid = document.getElementById('rendered-grid');
-
-  // Fill in layout cells
-  for (let i = 0; i < totalCells; i++) {
-    const mKey = layoutMap[i];
-    const m = mKey ? metrics.find(x => x.key === mKey) : null;
-    const panel = buildPanel(m, rawData[mKey] || [], tab?.color);
+  for(let i=0;i<total;i++){
+    const mk=lmap[i];const m=mk?metrics.find(x=>x.key===mk):null;
+    const panel=buildPanel(m,raw[mk]||[],tab?.color);
     grid.appendChild(panel);
   }
 
-  // Any unplaced metrics go below
-  const unplacedMetrics = metrics.filter(m => !Object.values(layoutMap).includes(m.key));
-  if (unplacedMetrics.length) {
-    const overflow = document.createElement('div');
-    overflow.style.cssText = `grid-column:1/-1;display:grid;grid-template-columns:repeat(${gridCols},1fr);gap:12px;margin-top:0`;
-    unplacedMetrics.forEach(m => overflow.appendChild(buildPanel(m, rawData[m.key] || [], tab?.color)));
-    grid.after(overflow);
+  // Unplaced
+  const placed=new Set(Object.values(lmap));
+  const extra=metrics.filter(m=>!placed.has(m.key));
+  if(extra.length){
+    const row=document.createElement('div');
+    row.style.cssText=`grid-column:1/-1;display:grid;grid-template-columns:repeat(${cols},1fr);gap:10px`;
+    extra.forEach(m=>row.appendChild(buildPanel(m,raw[m.key]||[],tab?.color)));
+    grid.after(row);
   }
 }
 
-function buildPanel(metric, rawPoints, tabColor) {
-  const panel = document.createElement('div');
-  panel.className = 'chart-panel';
+function buildPanel(metric,rawPts,tabColor){
+  const panel=document.createElement('div');
+  if(!metric){panel.className='empty-cell';return panel;}
+  panel.className='panel';
+  const fromV=document.getElementById('f-from').value,toV=document.getElementById('f-to').value;
+  let pts=rawPts.filter(p=>{if(fromV&&p.date<fromV)return false;if(toV&&p.date>toV)return false;return true;});
+  pts.sort((a,b)=>a.date.localeCompare(b.date));
+  const grouped=DU.aggregate(pts,gran,metric.agg||'avg');
+  const labels=grouped.map(g=>DU.label(g.gk,gran));
+  const values=grouped.map(g=>g.value);
+  const valid=values.filter(v=>v!==null);
+  const avg=valid.length?valid.reduce((a,b)=>a+b,0)/valid.length:null;
+  const target=metric.target;const dir=metric.dir||'above';
+  let avgColor='var(--white)';
+  if(avg!==null&&target!=null){avgColor=(dir==='above'?avg>=target:avg<=target)?'#4ade80':'#ff6666';}
 
-  if (!metric) {
-    panel.style.background = 'rgba(255,255,255,.02)';
-    panel.style.border = '1px dashed rgba(255,255,255,.06)';
-    panel.style.minHeight = '200px';
-    return panel;
-  }
-
-  // Filter by date range
-  const fromVal = document.getElementById('filter-from').value;
-  const toVal   = document.getElementById('filter-to').value;
-  let points = rawPoints.filter(p => {
-    if (fromVal && p.date < fromVal) return false;
-    if (toVal   && p.date > toVal)   return false;
-    return true;
-  });
-  points.sort((a,b) => a.date.localeCompare(b.date));
-
-  // Aggregate
-  const grouped = DateUtils.aggregatePoints(points, granularity, metric.agg || 'avg');
-  const labels = grouped.map(g => DateUtils.label(g.groupKey, granularity));
-  const values = grouped.map(g => g.value);
-
-  // Compute overall average for KPI
-  const validVals = values.filter(v => v !== null);
-  const avg = validVals.length ? validVals.reduce((a,b)=>a+b,0)/validVals.length : null;
-
-  // Determine avg color
-  const target = metric.target;
-  const dir = metric.dir || 'above';
-  let avgColor = 'var(--white)';
-  if (avg !== null && target !== null && target !== undefined) {
-    const good = dir === 'above' ? avg >= target : avg <= target;
-    avgColor = good ? '#4ade80' : '#ff6666';
-  }
-
-  panel.innerHTML = `
-    <div class="chart-panel-header">
-      <div>
-        <div class="chart-panel-title">${escHtml(metric.name)}</div>
-        ${target != null ? `<div class="chart-panel-target">Target: ${fmtVal(target, metric.format)}</div>` : ''}
-      </div>
-      <div class="chart-panel-avg" style="color:${avgColor}">
-        ${avg !== null ? fmtVal(avg, metric.format) : '—'}
-        <span class="avg-label">Avg</span>
-      </div>
+  panel.innerHTML=`
+    <div class="ph">
+      <div><div class="ptit">${esc(metric.name)}</div>${target!=null?`<div class="ptgt">Target: ${fmtVal(target,metric.format)}</div>`:''}</div>
+      <div class="pavg" style="color:${avgColor}">${avg!==null?fmtVal(avg,metric.format):'—'}<span class="albl">Avg</span></div>
     </div>
-    <div class="chart-panel-body">
-      ${grouped.length
-        ? `<canvas id="chart-${metric.key}" style="width:100%;height:100%"></canvas>`
-        : `<div class="panel-loading"><span style="color:var(--gray);font-size:12px">No data in selected range</span></div>`
-      }
-    </div>
-  `;
+    <div class="pbody" style="height:${grouped.length?'180px':'auto'}">
+      ${grouped.length?`<canvas id="ch-${metric.key}"></canvas>`:'<div class="pload" style="font-size:12px;color:var(--gray)">No data in range</div>'}
+    </div>`;
 
-  if (grouped.length) {
-    // Draw chart after DOM insert
-    requestAnimationFrame(() => {
-      const canvas = document.getElementById('chart-' + metric.key);
-      if (!canvas) return;
-      // Size canvas to parent
-      canvas.style.height = '100%';
-      buildChart(canvas, {
-        labels, values,
-        target: metric.target,
-        format: metric.format,
-        chartType: metric.chartType || 'bar',
-        color: metric.color || tabColor || '#cc0000',
+  if(grouped.length){
+    requestAnimationFrame(()=>{
+      const cv=document.getElementById('ch-'+metric.key);if(!cv)return;
+      if(cv._ch)cv._ch.destroy();
+      const color=metric.color||tabColor||'#cc0000';
+      const hasT=target!=null&&!isNaN(parseFloat(target));const tv=parseFloat(target);
+      const datasets=[{
+        data:values,
+        backgroundColor:values.map(v=>v===null?color:(hasT?(dir==='above'?v>=tv:v<=tv)?'#22c55e':color:color)),
+        borderColor:'transparent',borderRadius:3,barPercentage:.78,categoryPercentage:.88
+      }];
+      if(hasT)datasets.push({type:'line',data:Array(labels.length).fill(tv),borderColor:'rgba(255,255,255,.3)',borderDash:[5,4],borderWidth:1.5,pointRadius:0,fill:false,datalabels:{display:false}});
+      const isLine=metric.chartType==='line';
+      if(isLine){datasets[0].type='line';datasets[0].borderColor=color;datasets[0].backgroundColor=color+'22';datasets[0].fill=true;datasets[0].tension=.3;datasets[0].pointRadius=2;delete datasets[0].barPercentage;delete datasets[0].categoryPercentage;delete datasets[0].borderRadius;}
+      cv._ch=new Chart(cv,{
+        type:isLine?'line':'bar',data:{labels,datasets},
+        options:{responsive:true,maintainAspectRatio:false,animation:{duration:250},
+          plugins:{
+            legend:{display:false},
+            tooltip:{backgroundColor:'#0f2040',borderColor:'#1a3058',borderWidth:1,titleColor:'#b0c0d0',bodyColor:'#fff',callbacks:{label:ctx=>fmtVal(ctx.parsed.y,metric.format)}},
+            datalabels:{display:labels.length<=28,color:'#fff',font:{size:9,weight:'600'},anchor:'end',align:'top',formatter:v=>v===null?'':fmtVal(v,metric.format),padding:{bottom:2}}
+          },
+          scales:{
+            x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#8899aa',font:{size:9,family:'Barlow Condensed'},maxRotation:45}},
+            y:{grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#8899aa',font:{size:9},callback:v=>metric.format==='percent'?v+'%':v},beginAtZero:true}
+          }
+        }
       });
     });
   }
-
   return panel;
 }
 
-// ── GRANULARITY ───────────────────────────────────────────────
-function setGranularity(gran, btn) {
-  granularity = gran;
-  document.querySelectorAll('.gran-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  if (currentTabKey && tabDataCache[currentTabKey]) renderDashboard(currentTabKey);
-}
-
-function clearDateFilter() {
-  document.getElementById('filter-from').value = '';
-  document.getElementById('filter-to').value = '';
-  refreshCurrentTab();
-}
-
-// ── FULLSCREEN ────────────────────────────────────────────────
-function toggleFullscreen() {
-  if (!document.fullscreenElement) {
-    document.documentElement.requestFullscreen().catch(() => {});
-  } else {
-    document.exitFullscreen();
-  }
-}
-
-function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function setGran(g,btn){gran=g;document.querySelectorAll('.gbtn').forEach(b=>b.classList.remove('act'));btn.classList.add('act');if(curTab&&cache[curTab])renderDash(curTab);}
+function clearDates(){document.getElementById('f-from').value='';document.getElementById('f-to').value='';refresh();}
+function toggleFS(){if(!document.fullscreenElement)document.documentElement.requestFullscreen().catch(()=>{});else document.exitFullscreen();}
 </script>
 </body>
 </html>
