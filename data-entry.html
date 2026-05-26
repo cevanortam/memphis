@@ -4,118 +4,82 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Data Entry — Lean Corner</title>
-<link rel="stylesheet" href="css/shared.css">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-.entry-layout { display: grid; grid-template-columns: 260px 1fr; gap: 0; min-height: calc(100vh - 48px); }
-.entry-sidebar { background: var(--navy-mid); border-right: 1px solid var(--border); padding: 20px; display: flex; flex-direction: column; gap: 8px; }
-.entry-main { padding: 24px; overflow-y: auto; }
+:root{--navy:#0a1628;--navy-mid:#0f2040;--navy-light:#1a3058;--navy-card:#112035;--red:#cc0000;--red-h:#e60000;--white:#fff;--gray:#8899aa;--gray-l:#b0c0d0;--green:#22c55e;--border:rgba(255,255,255,.08);--r:6px;--fh:'Barlow Condensed',sans-serif;--fb:'Barlow',sans-serif}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--navy);color:var(--white);font-family:var(--fb);font-size:14px;min-height:100vh}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--navy)}::-webkit-scrollbar-thumb{background:var(--navy-light);border-radius:3px}
+a{text-decoration:none}
+.top-nav{background:var(--navy-mid);border-bottom:2px solid var(--red);display:flex;align-items:center;gap:8px;padding:0 16px;height:48px;position:sticky;top:0;z-index:100}
+.brand{font-family:var(--fh);font-size:20px;font-weight:800;letter-spacing:1px;color:var(--white);margin-right:12px}
+.top-nav a{color:var(--gray-l);font-size:13px;font-weight:600;padding:4px 10px;border-radius:4px;transition:all .15s}
+.top-nav a:hover,.top-nav a.active{background:var(--navy-light);color:var(--white)}
+.spacer{flex:1}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--r);font-family:var(--fb);font-weight:600;font-size:13px;cursor:pointer;transition:all .15s;border:none}
+.btn-p{background:var(--red);color:var(--white)}.btn-p:hover{background:var(--red-h)}
+.btn-s{background:var(--navy-light);color:var(--white);border:1px solid var(--border)}.btn-s:hover{background:#234070}
+.btn-g{background:transparent;color:var(--gray-l);border:1px solid var(--border)}.btn-g:hover{background:var(--navy-light);color:var(--white)}
+.btn-d{background:transparent;color:#ff6666;border:1px solid rgba(255,100,100,.3)}
+.sm{padding:4px 10px;font-size:12px}
+input,select,textarea{background:var(--navy-mid);color:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:7px 10px;font-family:var(--fb);font-size:13px;width:100%;outline:none;transition:border-color .15s}
+input:focus,select:focus,textarea:focus{border-color:var(--red)}
+input::placeholder{color:var(--gray)}
+select option{background:var(--navy-mid)}
+label{display:block;font-size:12px;font-weight:600;color:var(--gray-l);margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px}
+.fg{margin-bottom:14px}.fr{display:grid;gap:12px}
+.card{background:var(--navy-card);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:12px}
+.ct{font-family:var(--fh);font-weight:700;font-size:13px;letter-spacing:.5px;text-transform:uppercase;color:var(--gray-l);margin-bottom:12px;border-bottom:1px solid var(--border);padding-bottom:8px}
+#tc{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--navy-light);border-left:3px solid var(--green);border-radius:var(--r);padding:10px 16px;font-size:13px;color:var(--white);box-shadow:0 4px 16px rgba(0,0,0,.5);animation:si .2s ease;max-width:340px}
+.toast.err{border-color:var(--red)}
+@keyframes si{from{transform:translateX(30px);opacity:0}to{transform:translateX(0);opacity:1}}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;text-transform:uppercase}
+.bg{background:rgba(136,153,170,.15);color:var(--gray-l)}.bn{background:rgba(34,197,94,.2);color:#4ade80}
+.hidden{display:none!important}
+.fl{display:flex}.aic{align-items:center}.jb{justify-content:space-between}.g2{gap:8px}.g3{gap:12px}
+.mt2{margin-top:8px}.mt3{margin-top:12px}.mb2{margin-bottom:8px}
+.tg{color:var(--gray)}.ts{font-size:12px}
+.spinner{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--red);border-radius:50%;animation:spin .7s linear infinite;display:inline-block;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
 
-.tab-btn {
-  background: var(--navy-card); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 10px 12px;
-  cursor: pointer; transition: border-color .15s;
-  font-weight: 600; font-size: 13px;
-  display: flex; align-items: center; gap: 8px;
-}
-.tab-btn:hover, .tab-btn.active { border-color: var(--red); }
-.tab-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.layout{display:grid;grid-template-columns:240px 1fr;min-height:calc(100vh - 48px)}
+.sb{background:var(--navy-mid);border-right:1px solid var(--border);padding:20px;display:flex;flex-direction:column;gap:8px;overflow-y:auto}
+.main{padding:24px;overflow-y:auto}
+.sh{font-family:var(--fh);font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray-l);margin-bottom:8px}
+.tbtn{background:var(--navy-card);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;cursor:pointer;transition:border-color .15s;font-weight:600;font-size:13px;display:flex;align-items:center;gap:8px}
+.tbtn:hover,.tbtn.act{border-color:var(--red)}
+.tdot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.ptitle{font-family:var(--fh);font-size:28px;font-weight:800;letter-spacing:1px;text-transform:uppercase}
+.psubt{color:var(--gray);font-size:13px;margin-top:2px}
 
-.mode-tabs { display: flex; gap: 2px; background: var(--navy-mid); border-radius: var(--radius); padding: 3px; margin-bottom: 20px; }
-.mode-tab {
-  flex: 1; text-align: center; padding: 8px;
-  border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 600;
-  color: var(--gray-light); transition: all .15s;
-}
-.mode-tab.active { background: var(--red); color: var(--white); }
+.mode-tabs{display:flex;gap:2px;background:var(--navy-mid);border-radius:var(--r);padding:3px;margin-bottom:20px}
+.mtab{flex:1;text-align:center;padding:8px;border-radius:4px;cursor:pointer;font-size:13px;font-weight:600;color:var(--gray-l);transition:all .15s}
+.mtab.act{background:var(--red);color:var(--white)}
 
-/* Paste mode */
-.paste-area {
-  background: var(--navy-mid); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 0;
-  overflow: hidden;
-}
-.paste-header {
-  background: var(--navy-card); padding: 12px 16px;
-  border-bottom: 1px solid var(--border);
-  font-family: var(--font-head); font-weight: 700;
-  font-size: 13px; text-transform: uppercase; letter-spacing: .5px;
-}
-.paste-body { padding: 16px; }
-.paste-hint { color: var(--gray); font-size: 12px; margin-bottom: 10px; }
+.hint{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;font-size:12px;color:var(--gray-l);margin-bottom:14px;line-height:1.6}
+textarea.paste{font-family:'Courier New',monospace;font-size:12px;resize:vertical;min-height:90px;background:rgba(0,0,0,.2)}
 
-textarea.data-paste {
-  font-family: 'Courier New', monospace;
-  font-size: 12px;
-  resize: vertical;
-  min-height: 80px;
-  background: rgba(0,0,0,.2);
-  border-color: var(--border);
-  color: var(--white);
-}
-textarea.data-paste:focus { border-color: var(--red); }
+.prev-wrap{overflow-x:auto;max-height:280px;overflow-y:auto;margin-top:12px}
+.ptable{width:100%;border-collapse:collapse;font-size:12px;min-width:300px}
+.ptable th{background:var(--navy-card);padding:6px 10px;text-align:left;font-weight:600;color:var(--gray-l);border-bottom:1px solid var(--border);position:sticky;top:0}
+.ptable td{padding:5px 10px;border-bottom:1px solid rgba(255,255,255,.04);color:var(--gray-l)}
+.ptable .vv{color:var(--white);font-weight:600}
+.pcount{font-size:12px;color:var(--gray);margin:8px 0}
 
-.preview-table {
-  width: 100%; border-collapse: collapse; font-size: 12px;
-  margin-top: 12px;
-}
-.preview-table th {
-  background: var(--navy-card); padding: 6px 10px;
-  text-align: left; font-weight: 600;
-  color: var(--gray-light); font-size: 11px;
-  border-bottom: 1px solid var(--border);
-}
-.preview-table td {
-  padding: 5px 10px; border-bottom: 1px solid rgba(255,255,255,0.04);
-  color: var(--gray-light);
-}
-.preview-table tr:hover td { background: rgba(255,255,255,.02); }
-.preview-table .val-col { color: var(--white); font-weight: 600; }
-.preview-count { font-size: 12px; color: var(--gray); margin-top: 8px; }
+.day-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-top:16px}
+.day-card{background:var(--navy-card);border:1px solid var(--border);border-radius:var(--r);padding:14px}
+.dlab{font-family:var(--fh);font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px}
+.drow{display:flex;gap:6px;align-items:center}.drow input{flex:1}
 
-/* Daily mode */
-.daily-grid {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px;
-  margin-top: 16px;
-}
-.daily-card {
-  background: var(--navy-card); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 14px;
-}
-.daily-card .metric-label {
-  font-family: var(--font-head); font-weight: 700; font-size: 13px;
-  text-transform: uppercase; letter-spacing: .4px; margin-bottom: 8px;
-}
-.daily-card .last-val { font-size: 11px; color: var(--gray); margin-bottom: 8px; }
-.daily-card .entry-row { display: flex; gap: 6px; align-items: center; }
-.daily-card .entry-row input { flex: 1; }
-
-/* History viewer */
-.history-table-wrap { overflow-x: auto; margin-top: 12px; }
-.history-table {
-  width: 100%; border-collapse: collapse; font-size: 12px;
-  min-width: 400px;
-}
-.history-table th {
-  background: var(--navy-card); padding: 7px 12px;
-  text-align: left; font-weight: 600; color: var(--gray-light);
-  border-bottom: 1px solid var(--border); position: sticky; top: 0;
-}
-.history-table td { padding: 6px 12px; border-bottom: 1px solid rgba(255,255,255,.04); }
-.history-table tr:hover td { background: rgba(255,255,255,.02); }
-.history-table .editable { cursor: pointer; }
-.history-table .editable:hover { color: var(--white); text-decoration: underline; }
-
-/* Status bar */
-.status-bar {
-  background: var(--navy-card); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 10px 14px;
-  font-size: 12px; margin-bottom: 16px;
-  display: flex; align-items: center; gap: 10px;
-}
+.htable{width:100%;border-collapse:collapse;font-size:12px}
+.htable th{background:var(--navy-card);padding:7px 12px;text-align:left;font-weight:600;color:var(--gray-l);border-bottom:1px solid var(--border);position:sticky;top:0}
+.htable td{padding:6px 12px;border-bottom:1px solid rgba(255,255,255,.04)}
+.htable tr:hover td{background:rgba(255,255,255,.02)}
+.hw{overflow-x:auto;max-height:calc(100vh - 280px);overflow-y:auto;margin-top:12px}
 </style>
 </head>
 <body>
-
 <nav class="top-nav">
   <a class="brand" href="dashboard.html">📊 LEAN CORNER</a>
   <a href="dashboard.html">Dashboard</a>
@@ -124,115 +88,78 @@ textarea.data-paste:focus { border-color: var(--red); }
   <span class="spacer"></span>
 </nav>
 
-<div class="entry-layout">
-  <!-- SIDEBAR -->
-  <div class="entry-sidebar">
-    <div style="font-family:var(--font-head);font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray-light);margin-bottom:4px">Select Tab</div>
-    <div id="tab-buttons"></div>
+<div class="layout">
+  <div class="sb">
+    <div class="sh">Select Tab</div>
+    <div id="tblist"></div>
   </div>
-
-  <!-- MAIN -->
-  <div class="entry-main">
-    <div id="no-tab-state" style="padding-top:80px;text-align:center">
+  <div class="main">
+    <div id="no-tab" style="text-align:center;padding-top:80px">
       <div style="font-size:48px;margin-bottom:12px">📥</div>
-      <div style="font-family:var(--font-head);font-size:20px;font-weight:700">Select a Tab</div>
-      <div class="text-gray mt-2">Choose a dashboard tab from the sidebar to enter data.</div>
+      <div style="font-family:var(--fh);font-size:22px;font-weight:700">Select a Tab</div>
+      <div class="tg mt2">Choose a dashboard tab from the sidebar to enter data.</div>
     </div>
-
-    <div id="entry-area" class="hidden">
-      <div class="flex items-center justify-between mb-3">
-        <div>
-          <div class="page-title" id="entry-title">—</div>
-          <div class="page-subtitle" id="entry-subtitle"></div>
-        </div>
+    <div id="ea" class="hidden">
+      <div class="fl jb aic" style="margin-bottom:16px">
+        <div><div class="ptitle" id="etitle">—</div><div class="psubt" id="esubt"></div></div>
       </div>
-
-      <!-- Mode selector -->
       <div class="mode-tabs">
-        <div class="mode-tab active" onclick="switchMode('paste', this)">📋 Paste Historical Data</div>
-        <div class="mode-tab" onclick="switchMode('daily', this)">📅 Add Today's Data</div>
-        <div class="mode-tab" onclick="switchMode('history', this)">📜 View / Edit History</div>
+        <div class="mtab act" onclick="setMode('paste',this)">📋 Paste Historical Data</div>
+        <div class="mtab" onclick="setMode('daily',this)">📅 Add Daily Data</div>
+        <div class="mtab" onclick="setMode('history',this)">📜 View History</div>
       </div>
 
-      <!-- ── PASTE MODE ── -->
+      <!-- PASTE -->
       <div id="mode-paste">
-        <div class="status-bar">
-          <span>💡</span>
-          <span>Copy a row from your Excel sheet where each column is one day. Paste it below, then assign the metric and set the start date.</span>
-        </div>
-
-        <div class="card mb-3">
-          <div class="card-title">Step 1 — Select Metric</div>
-          <div class="form-row" style="grid-template-columns:1fr 1fr 1fr">
-            <div class="form-group">
-              <label>Metric</label>
-              <select id="paste-metric"></select>
-            </div>
-            <div class="form-group">
-              <label>First Column Date</label>
-              <input type="date" id="paste-start-date">
-            </div>
-            <div class="form-group">
-              <label>Date Interval</label>
-              <select id="paste-interval">
-                <option value="1">Daily (1 day per column)</option>
-                <option value="7">Weekly (7 days per column)</option>
-              </select>
-            </div>
+        <div class="hint">💡 <strong>How to use:</strong> In your Excel sheet, select the value cells for one metric (one row, multiple columns where each column = one day). Copy them, then paste below. Set the date of the first column and import.</div>
+        <div class="card">
+          <div class="ct">Step 1 — Select Metric &amp; Date Range</div>
+          <div class="fr" style="grid-template-columns:1fr 1fr 1fr">
+            <div class="fg"><label>Metric</label><select id="pm"></select></div>
+            <div class="fg"><label>First Column Date</label><input type="date" id="psd"></div>
+            <div class="fg"><label>Interval Per Column</label><select id="pint"><option value="1">Daily (1 day)</option><option value="7">Weekly (7 days)</option></select></div>
           </div>
         </div>
-
-        <div class="card mb-3">
-          <div class="card-title">Step 2 — Paste Data Row</div>
-          <div class="paste-hint">Copy the value cells from Excel (one row, multiple columns) and paste here. Tab-separated or comma-separated — both work.</div>
-          <textarea class="data-paste" id="paste-input" rows="3" placeholder="Paste tab-separated or comma-separated values here...&#10;e.g.  100  99.5  100  98.2  100  100  99.8"></textarea>
-          <button class="btn btn-secondary mt-2" onclick="previewPaste()">🔍 Preview</button>
+        <div class="card">
+          <div class="ct">Step 2 — Paste Values</div>
+          <div class="hint" style="margin-bottom:10px">Paste tab-separated or comma-separated numbers. Blanks and "N/A" are skipped.</div>
+          <textarea class="paste" id="pdata" rows="4" placeholder="e.g.   100	99.5	100	98.2	100	100	99.8	100	100"></textarea>
+          <button class="btn btn-s mt2" onclick="previewPaste()">🔍 Preview</button>
         </div>
-
-        <div class="card" id="paste-preview" style="display:none">
-          <div class="card-title">Step 3 — Review & Import</div>
-          <div class="preview-count" id="preview-count"></div>
-          <div class="history-table-wrap" style="max-height:300px;overflow-y:auto">
-            <table class="preview-table" id="preview-table">
+        <div class="card hidden" id="prev-card">
+          <div class="ct">Step 3 — Review &amp; Import</div>
+          <div class="pcount" id="pcount"></div>
+          <div class="prev-wrap">
+            <table class="ptable" id="ptable">
               <thead><tr><th>#</th><th>Date</th><th>Value</th><th>Status</th></tr></thead>
               <tbody></tbody>
             </table>
           </div>
-          <div class="flex gap-2 mt-3">
-            <button class="btn btn-primary" onclick="importPaste()">✅ Import All</button>
-            <button class="btn btn-ghost" onclick="clearPaste()">Clear</button>
+          <div class="fl g2 mt3">
+            <button class="btn btn-p" onclick="importPaste()">✅ Import All</button>
+            <button class="btn btn-g" onclick="clearPaste()">Clear</button>
           </div>
         </div>
       </div>
 
-      <!-- ── DAILY MODE ── -->
+      <!-- DAILY -->
       <div id="mode-daily" class="hidden">
-        <div class="status-bar">
-          <span>📅</span>
-          <span>Enter today's values for each metric. Leave blank to skip.</span>
-        </div>
-        <div class="form-group" style="max-width:200px">
-          <label>Date</label>
-          <input type="date" id="daily-date">
-        </div>
-        <div class="daily-grid" id="daily-grid"></div>
-        <button class="btn btn-primary mt-3" onclick="submitDaily()" style="margin-top:16px">💾 Save All Values</button>
+        <div class="hint">📅 Enter values for each metric for a specific date. Leave blank to skip that metric.</div>
+        <div class="fg" style="max-width:200px"><label>Date</label><input type="date" id="ddate"></div>
+        <div class="day-grid" id="dgrid"></div>
+        <button class="btn btn-p" onclick="submitDaily()" style="margin-top:16px">💾 Save All</button>
       </div>
 
-      <!-- ── HISTORY MODE ── -->
+      <!-- HISTORY -->
       <div id="mode-history" class="hidden">
-        <div class="flex gap-3 mb-3 items-center">
-          <div class="form-group" style="margin:0;min-width:200px">
-            <label>Metric</label>
-            <select id="history-metric" onchange="loadHistory()"></select>
-          </div>
-          <button class="btn btn-ghost btn-sm" style="margin-top:18px" onclick="loadHistory()">↺ Refresh</button>
-          <button class="btn btn-danger btn-sm" style="margin-top:18px" onclick="clearMetricData()">🗑 Clear All Data</button>
+        <div class="fl g3 aic mb2">
+          <div class="fg" style="margin:0;min-width:220px"><label>Metric</label><select id="hm" onchange="loadHistory()"></select></div>
+          <button class="btn btn-g sm" style="margin-top:18px" onclick="loadHistory()">↺ Refresh</button>
         </div>
-        <div class="history-table-wrap" style="max-height:calc(100vh - 260px);overflow-y:auto">
-          <table class="history-table" id="history-table">
-            <thead><tr><th>Date</th><th>Value</th><th>Actions</th></tr></thead>
-            <tbody id="history-body"><tr><td colspan="3" class="text-gray" style="padding:20px">Select a metric above</td></tr></tbody>
+        <div class="hw">
+          <table class="htable">
+            <thead><tr><th>Date</th><th>Value</th><th>Action</th></tr></thead>
+            <tbody id="hbody"><tr><td colspan="3" class="tg" style="padding:20px">Select a metric above</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -240,222 +167,130 @@ textarea.data-paste:focus { border-color: var(--red); }
   </div>
 </div>
 
-<div id="toast-container"></div>
-
-<script src="js/shared.js"></script>
+<div id="tc"></div>
 <script>
-let currentTabKey = null;
-let currentMetrics = [];
-let pastePreviewData = []; // [{date, value}]
+const DEF_API='https://script.google.com/macros/s/AKfycbwrPedBNwsYajOrU8WqrLPxf1Su4iEOd97YWpY3z-nLW9GqGe3tfu3kN2VoLm2DCgWg/exec';
+function apiUrl(){return localStorage.getItem('lc_api_url')||DEF_API;}
+const API={
+  async get(a,p={}){const u=apiUrl();const q=new URLSearchParams({action:a,...p}).toString();const r=await fetch(`${u}?${q}`);const j=await r.json();if(j.error)throw new Error(j.error);return j;},
+  async post(b){const r=await fetch(apiUrl(),{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(b)});const j=await r.json();if(j.error)throw new Error(j.error);return j;}
+};
+function toast(m,t='ok'){let c=document.getElementById('tc');const el=document.createElement('div');el.className='toast'+(t==='err'?' err':'');el.textContent=m;c.appendChild(el);setTimeout(()=>el.remove(),3500);}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function fmtVal(v,fmt){if(v===null||v===undefined||isNaN(v))return '—';switch(fmt){case'percent':return v.toFixed(2)+'%';case'integer':return Math.round(v).toLocaleString();default:return v.toFixed(2);}}
 
-// ── Init ──────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', async () => {
-  // Default daily date to today
-  document.getElementById('daily-date').value = new Date().toISOString().substring(0,10);
+let curTab=null,metrics=[],previewData=[];
+
+document.addEventListener('DOMContentLoaded',async()=>{
+  document.getElementById('ddate').value=new Date().toISOString().substring(0,10);
   await loadTabs();
 });
 
-async function loadTabs() {
-  let tabs;
-  try { const res = await API.get('getConfig'); tabs = res.tabs || []; Config.set(res); }
-  catch { tabs = Config.getTabs(); }
-
-  const el = document.getElementById('tab-buttons');
-  el.innerHTML = tabs.map(t => `
-    <div class="tab-btn" data-key="${t.key}" onclick="selectTab('${t.key}')">
-      <div class="tab-dot" style="background:${t.color||'#cc0000'}"></div>
-      ${escHtml(t.name)}
-    </div>
-  `).join('');
+async function loadTabs(){
+  let tabs=[];
+  try{const c=await API.get('getConfig');tabs=c.tabs||[];localStorage.setItem('lc_cfg',JSON.stringify(c));}
+  catch{try{tabs=JSON.parse(localStorage.getItem('lc_cfg'))?.tabs||[];}catch{}}
+  const el=document.getElementById('tblist');
+  el.innerHTML=tabs.map(t=>`<div class="tbtn" data-k="${t.key}" onclick="selTab('${t.key}')"><div class="tdot" style="background:${t.color||'#cc0000'}"></div>${esc(t.name)}</div>`).join('');
 }
 
-async function selectTab(key) {
-  currentTabKey = key;
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.key === key));
-  document.getElementById('no-tab-state').classList.add('hidden');
-  document.getElementById('entry-area').classList.remove('hidden');
-
-  const tabs = Config.getTabs();
-  const tab = tabs.find(t => t.key === key);
-  document.getElementById('entry-title').textContent = tab?.name || key;
-  document.getElementById('entry-subtitle').textContent = tab?.customer || '';
-
-  try {
-    const res = await API.get('getMetrics', { tab: key });
-    currentMetrics = res.metrics || [];
-  } catch { currentMetrics = []; toast('Could not load metrics', 'error'); }
-
-  populateMetricSelects();
-  renderDailyGrid();
+async function selTab(k){
+  curTab=k;
+  document.querySelectorAll('.tbtn').forEach(b=>b.classList.toggle('act',b.dataset.k===k));
+  document.getElementById('no-tab').classList.add('hidden');
+  document.getElementById('ea').classList.remove('hidden');
+  const tabs=JSON.parse(localStorage.getItem('lc_cfg')||'{}').tabs||[];
+  const tab=tabs.find(t=>t.key===k);
+  document.getElementById('etitle').textContent=tab?.name||k;
+  document.getElementById('esubt').textContent=tab?.customer||'';
+  try{const r=await API.get('getMetrics',{tab:k});metrics=r.metrics||[];}
+  catch(e){metrics=[];toast('Could not load metrics: '+e.message,'err');}
+  populateSelects();renderDailyGrid();
 }
 
-function populateMetricSelects() {
-  const opts = currentMetrics.map(m => `<option value="${m.key}">${escHtml(m.name)}</option>`).join('');
-  document.getElementById('paste-metric').innerHTML = opts;
-  document.getElementById('history-metric').innerHTML = opts;
+function populateSelects(){
+  const opts=metrics.map(m=>`<option value="${m.key}">${esc(m.name)}</option>`).join('');
+  document.getElementById('pm').innerHTML=opts;
+  document.getElementById('hm').innerHTML=opts;
 }
 
-// ── MODE SWITCHING ────────────────────────────────────────────
-function switchMode(mode, btn) {
-  ['paste','daily','history'].forEach(m => document.getElementById('mode-'+m).classList.add('hidden'));
+function setMode(mode,btn){
+  ['paste','daily','history'].forEach(m=>document.getElementById('mode-'+m).classList.add('hidden'));
   document.getElementById('mode-'+mode).classList.remove('hidden');
-  document.querySelectorAll('.mode-tab').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  if (mode === 'history') loadHistory();
+  document.querySelectorAll('.mtab').forEach(b=>b.classList.remove('act'));btn.classList.add('act');
+  if(mode==='history')loadHistory();
 }
 
-// ── PASTE MODE ────────────────────────────────────────────────
-function previewPaste() {
-  const raw = document.getElementById('paste-input').value.trim();
-  const startDate = document.getElementById('paste-start-date').value;
-  const interval  = parseInt(document.getElementById('paste-interval').value);
-
-  if (!startDate) { toast('Set the first column date', 'error'); return; }
-  if (!raw) { toast('Paste some data first', 'error'); return; }
-
-  // Parse: try tab first, then comma
-  const sep = raw.includes('\t') ? '\t' : ',';
-  const cells = raw.split(sep).map(c => c.trim().replace(/[%$,]/g,''));
-
-  pastePreviewData = [];
-  const startMs = new Date(startDate + 'T00:00:00').getTime();
-
-  cells.forEach((cell, i) => {
-    if (cell === '' || cell.toLowerCase() === 'n/a') return;
-    const val = parseFloat(cell);
-    if (isNaN(val)) return;
-    const dateMs = startMs + (i * interval * 86400000);
-    const d = new Date(dateMs);
-    const iso = DateUtils.toISO(d);
-    pastePreviewData.push({ date: iso, value: val });
+// ── PASTE ─────────────────────────────────────────────────────
+function previewPaste(){
+  const raw=document.getElementById('pdata').value.trim();
+  const sd=document.getElementById('psd').value;
+  const intv=parseInt(document.getElementById('pint').value);
+  if(!sd){toast('Set the first column date','err');return;}
+  if(!raw){toast('Paste some data first','err');return;}
+  const sep=raw.includes('\t')?'\t':',';
+  const cells=raw.split(sep).map(c=>c.trim().replace(/[%$,\r\n]/g,''));
+  previewData=[];
+  const startMs=new Date(sd+'T12:00:00').getTime();
+  cells.forEach((cell,i)=>{
+    if(cell===''||cell.toLowerCase()==='n/a'||cell.toLowerCase()==='na')return;
+    const val=parseFloat(cell);if(isNaN(val))return;
+    const d=new Date(startMs+(i*intv*86400000));
+    const iso=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    previewData.push({date:iso,value:val});
   });
+  const tbody=document.querySelector('#ptable tbody');
+  tbody.innerHTML=previewData.map((p,i)=>`<tr><td>${i+1}</td><td>${p.date}</td><td class="vv">${p.value}</td><td><span class="badge bg">Ready</span></td></tr>`).join('');
+  document.getElementById('pcount').textContent=`${previewData.length} data points parsed from ${cells.length} total cells`;
+  document.getElementById('prev-card').classList.remove('hidden');
+}
+async function importPaste(){
+  if(!previewData.length){toast('Nothing to import','err');return;}
+  const mk=document.getElementById('pm').value;if(!mk){toast('Select a metric','err');return;}
+  const dates=previewData.map(p=>p.date),values=previewData.map(p=>p.value);
+  try{
+    const r=await API.post({action:'pasteData',tabName:curTab,metricKey:mk,dates,values});
+    toast(`Imported ${r.added??values.length} points ✅`);
+    document.querySelectorAll('#ptable tbody tr td:last-child').forEach(td=>td.innerHTML='<span class="badge bn">Imported</span>');
+  }catch(e){toast('Error: '+e.message,'err');}
+}
+function clearPaste(){document.getElementById('pdata').value='';document.getElementById('prev-card').classList.add('hidden');previewData=[];}
 
-  // Render preview
-  const tbody = document.querySelector('#preview-table tbody');
-  tbody.innerHTML = pastePreviewData.map((p,i) => `
-    <tr>
-      <td>${i+1}</td>
-      <td>${p.date}</td>
-      <td class="val-col">${p.value}</td>
-      <td><span class="badge badge-gray">Ready</span></td>
-    </tr>
-  `).join('');
-  document.getElementById('preview-count').textContent = `${pastePreviewData.length} data points parsed (${cells.length} total cells)`;
-  document.getElementById('paste-preview').style.display = '';
+// ── DAILY ─────────────────────────────────────────────────────
+function renderDailyGrid(){
+  document.getElementById('dgrid').innerHTML=metrics.map(m=>`
+    <div class="day-card">
+      <div class="dlab" style="color:${m.color||'var(--gray-l)'}">${esc(m.name)}</div>
+      <div class="drow"><input type="number" step="any" id="dv-${m.key}" placeholder="${m.format==='percent'?'e.g. 99.5':'Value'}"><span class="tg ts" style="white-space:nowrap">${m.format==='percent'?'%':''}</span></div>
+    </div>`).join('');
+}
+async function submitDaily(){
+  const date=document.getElementById('ddate').value;if(!date){toast('Set the date','err');return;}
+  const calls=[];
+  metrics.forEach(m=>{const el=document.getElementById('dv-'+m.key);if(!el)return;const v=el.value.trim();if(v==='')return;const n=parseFloat(v);if(!isNaN(n))calls.push(API.post({action:'appendDay',tabName:curTab,metricKey:m.key,date,value:n}));});
+  if(!calls.length){toast('No values entered','err');return;}
+  try{await Promise.all(calls);toast(`Saved ${calls.length} value(s) for ${date} ✅`);metrics.forEach(m=>{const el=document.getElementById('dv-'+m.key);if(el)el.value='';});}
+  catch(e){toast('Error: '+e.message,'err');}
 }
 
-async function importPaste() {
-  if (!pastePreviewData.length) { toast('Nothing to import', 'error'); return; }
-  const metricKey = document.getElementById('paste-metric').value;
-  if (!metricKey) { toast('Select a metric', 'error'); return; }
-
-  const dates  = pastePreviewData.map(p => p.date);
-  const values = pastePreviewData.map(p => p.value);
-
-  try {
-    const res = await API.post({ action: 'pasteData', tabName: currentTabKey, metricKey, dates, values });
-    toast(`Imported ${res.added ?? values.length} data points ✅`);
-    // Mark rows green
-    document.querySelectorAll('#preview-table tbody tr td:last-child').forEach(td => {
-      td.innerHTML = '<span class="badge badge-green">Imported</span>';
-    });
-  } catch (e) { toast('Import failed: ' + e.message, 'error'); }
+// ── HISTORY ───────────────────────────────────────────────────
+async function loadHistory(){
+  const mk=document.getElementById('hm').value;if(!mk||!curTab)return;
+  const body=document.getElementById('hbody');
+  body.innerHTML='<tr><td colspan="3" style="padding:16px;text-align:center"><span class="spinner"></span></td></tr>';
+  try{
+    const r=await API.get('getData',{tab:curTab,metric:mk});
+    const pts=(r.points||[]).sort((a,b)=>b.date.localeCompare(a.date));
+    const m=metrics.find(x=>x.key===mk);
+    body.innerHTML=pts.length?pts.map(p=>`<tr><td>${p.date}</td><td>${fmtVal(p.value,m?.format)}</td><td><button class="btn btn-g sm" onclick="editPt('${p.date}',${p.value},'${mk}')">Edit</button></td></tr>`).join(''):'<tr><td colspan="3" class="tg" style="padding:20px">No data yet</td></tr>';
+  }catch(e){body.innerHTML=`<tr><td colspan="3" style="color:#ff6666;padding:12px">${esc(e.message)}</td></tr>`;}
 }
-
-function clearPaste() {
-  document.getElementById('paste-input').value = '';
-  document.getElementById('paste-preview').style.display = 'none';
-  pastePreviewData = [];
+async function editPt(date,old,mk){
+  const v=prompt(`Edit value for ${date}:`,old);if(v===null)return;
+  const n=parseFloat(v);if(isNaN(n)){toast('Invalid number','err');return;}
+  try{await API.post({action:'appendDay',tabName:curTab,metricKey:mk,date,value:n});toast('Updated ✅');loadHistory();}
+  catch(e){toast('Error: '+e.message,'err');}
 }
-
-// ── DAILY MODE ────────────────────────────────────────────────
-function renderDailyGrid() {
-  const grid = document.getElementById('daily-grid');
-  grid.innerHTML = currentMetrics.map(m => `
-    <div class="daily-card">
-      <div class="metric-label" style="color:${m.color||'var(--gray-light)'}">${escHtml(m.name)}</div>
-      <div class="last-val" id="last-${m.key}">Last value: —</div>
-      <div class="entry-row">
-        <input type="number" step="any" id="daily-${m.key}" placeholder="${m.format==='percent'?'e.g. 99.5':'Value'}">
-        <span style="color:var(--gray);font-size:12px">${m.format==='percent'?'%':''}</span>
-      </div>
-    </div>
-  `).join('');
-}
-
-async function submitDaily() {
-  const date = document.getElementById('daily-date').value;
-  if (!date) { toast('Set the date', 'error'); return; }
-
-  const promises = [];
-  currentMetrics.forEach(m => {
-    const raw = document.getElementById('daily-' + m.key)?.value.trim();
-    if (raw === '' || raw === undefined) return;
-    const val = parseFloat(raw);
-    if (!isNaN(val)) {
-      promises.push(API.post({ action: 'appendDay', tabName: currentTabKey, metricKey: m.key, date, value: val }));
-    }
-  });
-
-  if (!promises.length) { toast('No values entered', 'error'); return; }
-  try {
-    await Promise.all(promises);
-    toast(`Saved ${promises.length} value(s) for ${date} ✅`);
-    // Clear inputs
-    currentMetrics.forEach(m => { const el = document.getElementById('daily-' + m.key); if (el) el.value = ''; });
-  } catch (e) { toast('Save failed: ' + e.message, 'error'); }
-}
-
-// ── HISTORY MODE ──────────────────────────────────────────────
-async function loadHistory() {
-  const metricKey = document.getElementById('history-metric').value;
-  if (!metricKey || !currentTabKey) return;
-  const tbody = document.getElementById('history-body');
-  tbody.innerHTML = '<tr><td colspan="3"><span class="spinner" style="margin:12px auto;display:block"></span></td></tr>';
-  try {
-    const res = await API.get('getData', { tab: currentTabKey, metric: metricKey });
-    const points = res.points || [];
-    points.sort((a,b) => b.date.localeCompare(a.date));
-    const m = currentMetrics.find(x => x.key === metricKey);
-    tbody.innerHTML = points.length ? points.map(p => `
-      <tr>
-        <td>${p.date}</td>
-        <td class="editable" onclick="editPoint('${p.date}', ${p.value}, '${metricKey}')">${fmtVal(p.value, m?.format)}</td>
-        <td>
-          <button class="btn btn-danger btn-sm" onclick="deletePoint('${p.date}', '${metricKey}')">✕</button>
-        </td>
-      </tr>
-    `).join('') : '<tr><td colspan="3" class="text-gray" style="padding:20px">No data yet</td></tr>';
-  } catch (e) { tbody.innerHTML = `<tr><td colspan="3" class="text-red">${e.message}</td></tr>`; }
-}
-
-async function editPoint(date, oldVal, metricKey) {
-  const newVal = prompt(`Edit value for ${date}:`, oldVal);
-  if (newVal === null) return;
-  const v = parseFloat(newVal);
-  if (isNaN(v)) { toast('Invalid number', 'error'); return; }
-  try {
-    await API.post({ action: 'appendDay', tabName: currentTabKey, metricKey, date, value: v });
-    toast('Updated');
-    loadHistory();
-  } catch (e) { toast(e.message, 'error'); }
-}
-
-async function deletePoint(date, metricKey) {
-  if (!confirm(`Delete data for ${date}?`)) return;
-  // We use appendDay with null — backend will handle removal via pasteData with empty
-  // Actually simplest: use pasteData with same date, we'll send a sentinel then remove in backend
-  // For now: inform user to clear in Sheets directly, or add a deletePoint action
-  toast('To delete individual points, edit the Google Sheet directly', 'error');
-}
-
-async function clearMetricData() {
-  const metricKey = document.getElementById('history-metric').value;
-  if (!confirm('Clear ALL data for this metric? This cannot be undone.')) return;
-  toast('To clear all data for a metric, delete the data sheet in Google Sheets directly.');
-}
-
-function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 </script>
 </body>
 </html>
