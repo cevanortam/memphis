@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Data Entry — Lean Corner</title>
+<link rel="stylesheet" href="css/shared.css">
+<style>
+.entry-layout { display: grid; grid-template-columns: 260px 1fr; gap: 0; min-height: calc(100vh - 48px); }
+.entry-sidebar { background: var(--navy-mid); border-right: 1px solid var(--border); padding: 20px; display: flex; flex-direction: column; gap: 8px; }
+.entry-main { padding: 24px; overflow-y: auto; }
+
+.tab-btn {
+  background: var(--navy-card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 10px 12px;
+  cursor: pointer; transition: border-color .15s;
+  font-weight: 600; font-size: 13px;
+  display: flex; align-items: center; gap: 8px;
+}
+.tab-btn:hover, .tab-btn.active { border-color: var(--red); }
+.tab-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+.mode-tabs { display: flex; gap: 2px; background: var(--navy-mid); border-radius: var(--radius); padding: 3px; margin-bottom: 20px; }
+.mode-tab {
+  flex: 1; text-align: center; padding: 8px;
+  border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 600;
+  color: var(--gray-light); transition: all .15s;
+}
+.mode-tab.active { background: var(--red); color: var(--white); }
+
+/* Paste mode */
+.paste-area {
+  background: var(--navy-mid); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 0;
+  overflow: hidden;
+}
+.paste-header {
+  background: var(--navy-card); padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-head); font-weight: 700;
+  font-size: 13px; text-transform: uppercase; letter-spacing: .5px;
+}
+.paste-body { padding: 16px; }
+.paste-hint { color: var(--gray); font-size: 12px; margin-bottom: 10px; }
+
+textarea.data-paste {
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  resize: vertical;
+  min-height: 80px;
+  background: rgba(0,0,0,.2);
+  border-color: var(--border);
+  color: var(--white);
+}
+textarea.data-paste:focus { border-color: var(--red); }
+
+.preview-table {
+  width: 100%; border-collapse: collapse; font-size: 12px;
+  margin-top: 12px;
+}
+.preview-table th {
+  background: var(--navy-card); padding: 6px 10px;
+  text-align: left; font-weight: 600;
+  color: var(--gray-light); font-size: 11px;
+  border-bottom: 1px solid var(--border);
+}
+.preview-table td {
+  padding: 5px 10px; border-bottom: 1px solid rgba(255,255,255,0.04);
+  color: var(--gray-light);
+}
+.preview-table tr:hover td { background: rgba(255,255,255,.02); }
+.preview-table .val-col { color: var(--white); font-weight: 600; }
+.preview-count { font-size: 12px; color: var(--gray); margin-top: 8px; }
+
+/* Daily mode */
+.daily-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px;
+  margin-top: 16px;
+}
+.daily-card {
+  background: var(--navy-card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px;
+}
+.daily-card .metric-label {
+  font-family: var(--font-head); font-weight: 700; font-size: 13px;
+  text-transform: uppercase; letter-spacing: .4px; margin-bottom: 8px;
+}
+.daily-card .last-val { font-size: 11px; color: var(--gray); margin-bottom: 8px; }
+.daily-card .entry-row { display: flex; gap: 6px; align-items: center; }
+.daily-card .entry-row input { flex: 1; }
+
+/* History viewer */
+.history-table-wrap { overflow-x: auto; margin-top: 12px; }
+.history-table {
+  width: 100%; border-collapse: collapse; font-size: 12px;
+  min-width: 400px;
+}
+.history-table th {
+  background: var(--navy-card); padding: 7px 12px;
+  text-align: left; font-weight: 600; color: var(--gray-light);
+  border-bottom: 1px solid var(--border); position: sticky; top: 0;
+}
+.history-table td { padding: 6px 12px; border-bottom: 1px solid rgba(255,255,255,.04); }
+.history-table tr:hover td { background: rgba(255,255,255,.02); }
+.history-table .editable { cursor: pointer; }
+.history-table .editable:hover { color: var(--white); text-decoration: underline; }
+
+/* Status bar */
+.status-bar {
+  background: var(--navy-card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 10px 14px;
+  font-size: 12px; margin-bottom: 16px;
+  display: flex; align-items: center; gap: 10px;
+}
+</style>
+</head>
+<body>
+
+<nav class="top-nav">
+  <a class="brand" href="dashboard.html">📊 LEAN CORNER</a>
+  <a href="dashboard.html">Dashboard</a>
+  <a href="data-entry.html" class="active">Data Entry</a>
+  <a href="setup.html">Setup</a>
+  <span class="spacer"></span>
+</nav>
+
+<div class="entry-layout">
+  <!-- SIDEBAR -->
+  <div class="entry-sidebar">
+    <div style="font-family:var(--font-head);font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray-light);margin-bottom:4px">Select Tab</div>
+    <div id="tab-buttons"></div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="entry-main">
+    <div id="no-tab-state" style="padding-top:80px;text-align:center">
+      <div style="font-size:48px;margin-bottom:12px">📥</div>
+      <div style="font-family:var(--font-head);font-size:20px;font-weight:700">Select a Tab</div>
+      <div class="text-gray mt-2">Choose a dashboard tab from the sidebar to enter data.</div>
+    </div>
+
+    <div id="entry-area" class="hidden">
+      <div class="flex items-center justify-between mb-3">
+        <div>
+          <div class="page-title" id="entry-title">—</div>
+          <div class="page-subtitle" id="entry-subtitle"></div>
+        </div>
+      </div>
+
+      <!-- Mode selector -->
+      <div class="mode-tabs">
+        <div class="mode-tab active" onclick="switchMode('paste', this)">📋 Paste Historical Data</div>
+        <div class="mode-tab" onclick="switchMode('daily', this)">📅 Add Today's Data</div>
+        <div class="mode-tab" onclick="switchMode('history', this)">📜 View / Edit History</div>
+      </div>
+
+      <!-- ── PASTE MODE ── -->
+      <div id="mode-paste">
+        <div class="status-bar">
+          <span>💡</span>
+          <span>Copy a row from your Excel sheet where each column is one day. Paste it below, then assign the metric and set the start date.</span>
+        </div>
+
+        <div class="card mb-3">
+          <div class="card-title">Step 1 — Select Metric</div>
+          <div class="form-row" style="grid-template-columns:1fr 1fr 1fr">
+            <div class="form-group">
+              <label>Metric</label>
+              <select id="paste-metric"></select>
+            </div>
+            <div class="form-group">
+              <label>First Column Date</label>
+              <input type="date" id="paste-start-date">
+            </div>
+            <div class="form-group">
+              <label>Date Interval</label>
+              <select id="paste-interval">
+                <option value="1">Daily (1 day per column)</option>
+                <option value="7">Weekly (7 days per column)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mb-3">
+          <div class="card-title">Step 2 — Paste Data Row</div>
+          <div class="paste-hint">Copy the value cells from Excel (one row, multiple columns) and paste here. Tab-separated or comma-separated — both work.</div>
+          <textarea class="data-paste" id="paste-input" rows="3" placeholder="Paste tab-separated or comma-separated values here...&#10;e.g.  100  99.5  100  98.2  100  100  99.8"></textarea>
+          <button class="btn btn-secondary mt-2" onclick="previewPaste()">🔍 Preview</button>
+        </div>
+
+        <div class="card" id="paste-preview" style="display:none">
+          <div class="card-title">Step 3 — Review & Import</div>
+          <div class="preview-count" id="preview-count"></div>
+          <div class="history-table-wrap" style="max-height:300px;overflow-y:auto">
+            <table class="preview-table" id="preview-table">
+              <thead><tr><th>#</th><th>Date</th><th>Value</th><th>Status</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="flex gap-2 mt-3">
+            <button class="btn btn-primary" onclick="importPaste()">✅ Import All</button>
+            <button class="btn btn-ghost" onclick="clearPaste()">Clear</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── DAILY MODE ── -->
+      <div id="mode-daily" class="hidden">
+        <div class="status-bar">
+          <span>📅</span>
+          <span>Enter today's values for each metric. Leave blank to skip.</span>
+        </div>
+        <div class="form-group" style="max-width:200px">
+          <label>Date</label>
+          <input type="date" id="daily-date">
+        </div>
+        <div class="daily-grid" id="daily-grid"></div>
+        <button class="btn btn-primary mt-3" onclick="submitDaily()" style="margin-top:16px">💾 Save All Values</button>
+      </div>
+
+      <!-- ── HISTORY MODE ── -->
+      <div id="mode-history" class="hidden">
+        <div class="flex gap-3 mb-3 items-center">
+          <div class="form-group" style="margin:0;min-width:200px">
+            <label>Metric</label>
+            <select id="history-metric" onchange="loadHistory()"></select>
+          </div>
+          <button class="btn btn-ghost btn-sm" style="margin-top:18px" onclick="loadHistory()">↺ Refresh</button>
+          <button class="btn btn-danger btn-sm" style="margin-top:18px" onclick="clearMetricData()">🗑 Clear All Data</button>
+        </div>
+        <div class="history-table-wrap" style="max-height:calc(100vh - 260px);overflow-y:auto">
+          <table class="history-table" id="history-table">
+            <thead><tr><th>Date</th><th>Value</th><th>Actions</th></tr></thead>
+            <tbody id="history-body"><tr><td colspan="3" class="text-gray" style="padding:20px">Select a metric above</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script src="js/shared.js"></script>
+<script>
+let currentTabKey = null;
+let currentMetrics = [];
+let pastePreviewData = []; // [{date, value}]
+
+// ── Init ──────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+  // Default daily date to today
+  document.getElementById('daily-date').value = new Date().toISOString().substring(0,10);
+  await loadTabs();
+});
+
+async function loadTabs() {
+  let tabs;
+  try { const res = await API.get('getConfig'); tabs = res.tabs || []; Config.set(res); }
+  catch { tabs = Config.getTabs(); }
+
+  const el = document.getElementById('tab-buttons');
+  el.innerHTML = tabs.map(t => `
+    <div class="tab-btn" data-key="${t.key}" onclick="selectTab('${t.key}')">
+      <div class="tab-dot" style="background:${t.color||'#cc0000'}"></div>
+      ${escHtml(t.name)}
+    </div>
+  `).join('');
+}
+
+async function selectTab(key) {
+  currentTabKey = key;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.key === key));
+  document.getElementById('no-tab-state').classList.add('hidden');
+  document.getElementById('entry-area').classList.remove('hidden');
+
+  const tabs = Config.getTabs();
+  const tab = tabs.find(t => t.key === key);
+  document.getElementById('entry-title').textContent = tab?.name || key;
+  document.getElementById('entry-subtitle').textContent = tab?.customer || '';
+
+  try {
+    const res = await API.get('getMetrics', { tab: key });
+    currentMetrics = res.metrics || [];
+  } catch { currentMetrics = []; toast('Could not load metrics', 'error'); }
+
+  populateMetricSelects();
+  renderDailyGrid();
+}
+
+function populateMetricSelects() {
+  const opts = currentMetrics.map(m => `<option value="${m.key}">${escHtml(m.name)}</option>`).join('');
+  document.getElementById('paste-metric').innerHTML = opts;
+  document.getElementById('history-metric').innerHTML = opts;
+}
+
+// ── MODE SWITCHING ────────────────────────────────────────────
+function switchMode(mode, btn) {
+  ['paste','daily','history'].forEach(m => document.getElementById('mode-'+m).classList.add('hidden'));
+  document.getElementById('mode-'+mode).classList.remove('hidden');
+  document.querySelectorAll('.mode-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (mode === 'history') loadHistory();
+}
+
+// ── PASTE MODE ────────────────────────────────────────────────
+function previewPaste() {
+  const raw = document.getElementById('paste-input').value.trim();
+  const startDate = document.getElementById('paste-start-date').value;
+  const interval  = parseInt(document.getElementById('paste-interval').value);
+
+  if (!startDate) { toast('Set the first column date', 'error'); return; }
+  if (!raw) { toast('Paste some data first', 'error'); return; }
+
+  // Parse: try tab first, then comma
+  const sep = raw.includes('\t') ? '\t' : ',';
+  const cells = raw.split(sep).map(c => c.trim().replace(/[%$,]/g,''));
+
+  pastePreviewData = [];
+  const startMs = new Date(startDate + 'T00:00:00').getTime();
+
+  cells.forEach((cell, i) => {
+    if (cell === '' || cell.toLowerCase() === 'n/a') return;
+    const val = parseFloat(cell);
+    if (isNaN(val)) return;
+    const dateMs = startMs + (i * interval * 86400000);
+    const d = new Date(dateMs);
+    const iso = DateUtils.toISO(d);
+    pastePreviewData.push({ date: iso, value: val });
+  });
+
+  // Render preview
+  const tbody = document.querySelector('#preview-table tbody');
+  tbody.innerHTML = pastePreviewData.map((p,i) => `
+    <tr>
+      <td>${i+1}</td>
+      <td>${p.date}</td>
+      <td class="val-col">${p.value}</td>
+      <td><span class="badge badge-gray">Ready</span></td>
+    </tr>
+  `).join('');
+  document.getElementById('preview-count').textContent = `${pastePreviewData.length} data points parsed (${cells.length} total cells)`;
+  document.getElementById('paste-preview').style.display = '';
+}
+
+async function importPaste() {
+  if (!pastePreviewData.length) { toast('Nothing to import', 'error'); return; }
+  const metricKey = document.getElementById('paste-metric').value;
+  if (!metricKey) { toast('Select a metric', 'error'); return; }
+
+  const dates  = pastePreviewData.map(p => p.date);
+  const values = pastePreviewData.map(p => p.value);
+
+  try {
+    const res = await API.post({ action: 'pasteData', tabName: currentTabKey, metricKey, dates, values });
+    toast(`Imported ${res.added ?? values.length} data points ✅`);
+    // Mark rows green
+    document.querySelectorAll('#preview-table tbody tr td:last-child').forEach(td => {
+      td.innerHTML = '<span class="badge badge-green">Imported</span>';
+    });
+  } catch (e) { toast('Import failed: ' + e.message, 'error'); }
+}
+
+function clearPaste() {
+  document.getElementById('paste-input').value = '';
+  document.getElementById('paste-preview').style.display = 'none';
+  pastePreviewData = [];
+}
+
+// ── DAILY MODE ────────────────────────────────────────────────
+function renderDailyGrid() {
+  const grid = document.getElementById('daily-grid');
+  grid.innerHTML = currentMetrics.map(m => `
+    <div class="daily-card">
+      <div class="metric-label" style="color:${m.color||'var(--gray-light)'}">${escHtml(m.name)}</div>
+      <div class="last-val" id="last-${m.key}">Last value: —</div>
+      <div class="entry-row">
+        <input type="number" step="any" id="daily-${m.key}" placeholder="${m.format==='percent'?'e.g. 99.5':'Value'}">
+        <span style="color:var(--gray);font-size:12px">${m.format==='percent'?'%':''}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function submitDaily() {
+  const date = document.getElementById('daily-date').value;
+  if (!date) { toast('Set the date', 'error'); return; }
+
+  const promises = [];
+  currentMetrics.forEach(m => {
+    const raw = document.getElementById('daily-' + m.key)?.value.trim();
+    if (raw === '' || raw === undefined) return;
+    const val = parseFloat(raw);
+    if (!isNaN(val)) {
+      promises.push(API.post({ action: 'appendDay', tabName: currentTabKey, metricKey: m.key, date, value: val }));
+    }
+  });
+
+  if (!promises.length) { toast('No values entered', 'error'); return; }
+  try {
+    await Promise.all(promises);
+    toast(`Saved ${promises.length} value(s) for ${date} ✅`);
+    // Clear inputs
+    currentMetrics.forEach(m => { const el = document.getElementById('daily-' + m.key); if (el) el.value = ''; });
+  } catch (e) { toast('Save failed: ' + e.message, 'error'); }
+}
+
+// ── HISTORY MODE ──────────────────────────────────────────────
+async function loadHistory() {
+  const metricKey = document.getElementById('history-metric').value;
+  if (!metricKey || !currentTabKey) return;
+  const tbody = document.getElementById('history-body');
+  tbody.innerHTML = '<tr><td colspan="3"><span class="spinner" style="margin:12px auto;display:block"></span></td></tr>';
+  try {
+    const res = await API.get('getData', { tab: currentTabKey, metric: metricKey });
+    const points = res.points || [];
+    points.sort((a,b) => b.date.localeCompare(a.date));
+    const m = currentMetrics.find(x => x.key === metricKey);
+    tbody.innerHTML = points.length ? points.map(p => `
+      <tr>
+        <td>${p.date}</td>
+        <td class="editable" onclick="editPoint('${p.date}', ${p.value}, '${metricKey}')">${fmtVal(p.value, m?.format)}</td>
+        <td>
+          <button class="btn btn-danger btn-sm" onclick="deletePoint('${p.date}', '${metricKey}')">✕</button>
+        </td>
+      </tr>
+    `).join('') : '<tr><td colspan="3" class="text-gray" style="padding:20px">No data yet</td></tr>';
+  } catch (e) { tbody.innerHTML = `<tr><td colspan="3" class="text-red">${e.message}</td></tr>`; }
+}
+
+async function editPoint(date, oldVal, metricKey) {
+  const newVal = prompt(`Edit value for ${date}:`, oldVal);
+  if (newVal === null) return;
+  const v = parseFloat(newVal);
+  if (isNaN(v)) { toast('Invalid number', 'error'); return; }
+  try {
+    await API.post({ action: 'appendDay', tabName: currentTabKey, metricKey, date, value: v });
+    toast('Updated');
+    loadHistory();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function deletePoint(date, metricKey) {
+  if (!confirm(`Delete data for ${date}?`)) return;
+  // We use appendDay with null — backend will handle removal via pasteData with empty
+  // Actually simplest: use pasteData with same date, we'll send a sentinel then remove in backend
+  // For now: inform user to clear in Sheets directly, or add a deletePoint action
+  toast('To delete individual points, edit the Google Sheet directly', 'error');
+}
+
+async function clearMetricData() {
+  const metricKey = document.getElementById('history-metric').value;
+  if (!confirm('Clear ALL data for this metric? This cannot be undone.')) return;
+  toast('To clear all data for a metric, delete the data sheet in Google Sheets directly.');
+}
+
+function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+</script>
+</body>
+</html>

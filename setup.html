@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Setup — Lean Corner</title>
+<link rel="stylesheet" href="css/shared.css">
+<style>
+.setup-layout { display: grid; grid-template-columns: 280px 1fr; gap: 0; min-height: calc(100vh - 48px); }
+.setup-sidebar { background: var(--navy-mid); border-right: 1px solid var(--border); padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+.setup-main { padding: 24px; overflow-y: auto; }
+
+/* Tab list */
+.tab-item {
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--navy-card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 10px 12px;
+  cursor: pointer; transition: border-color .15s;
+  gap: 8px;
+}
+.tab-item:hover, .tab-item.active { border-color: var(--red); }
+.tab-item .tab-name { font-weight: 600; font-size: 13px; flex: 1; }
+.tab-item .tab-customer { font-size: 11px; color: var(--gray); }
+.tab-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+/* Metric list */
+.metric-list { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.metric-row {
+  background: var(--navy-card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 10px 14px;
+  display: grid; grid-template-columns: 1fr auto; gap: 8px;
+  align-items: center;
+}
+.metric-row .metric-name { font-weight: 600; font-size: 13px; }
+.metric-row .metric-meta { font-size: 11px; color: var(--gray); }
+.metric-actions { display: flex; gap: 6px; }
+
+/* Grid layout builder */
+.grid-builder {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--navy-mid);
+  position: relative;
+  min-height: 400px;
+}
+.grid-builder-inner {
+  display: grid;
+  gap: 4px;
+  padding: 4px;
+  min-height: 400px;
+}
+.grid-cell {
+  background: rgba(255,255,255,0.03);
+  border: 1px dashed rgba(255,255,255,0.08);
+  border-radius: 4px;
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: rgba(255,255,255,0.15);
+  transition: background .15s, border-color .15s;
+  cursor: pointer;
+  position: relative;
+}
+.grid-cell.drag-over {
+  background: rgba(204,0,0,.1);
+  border-color: var(--red);
+}
+.chart-tile {
+  background: var(--navy-card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  width: 100%; height: 100%;
+  display: flex; flex-direction: column;
+  padding: 8px;
+  cursor: grab;
+  user-select: none;
+  position: relative;
+}
+.chart-tile:active { cursor: grabbing; }
+.chart-tile .tile-name {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  color: var(--gray-light);
+  flex: 1;
+  display: flex; align-items: center;
+}
+.chart-tile .tile-remove {
+  position: absolute; top: 4px; right: 4px;
+  background: transparent; border: none; color: var(--gray);
+  cursor: pointer; font-size: 14px; line-height: 1;
+  padding: 2px 4px; border-radius: 3px;
+}
+.chart-tile .tile-remove:hover { color: var(--red); }
+.chart-tile .tile-target {
+  font-size: 10px; color: var(--gray); margin-top: 4px;
+}
+.unplaced-pool {
+  display: flex; flex-wrap: wrap; gap: 8px; padding: 12px;
+  background: var(--navy-mid); border: 1px solid var(--border);
+  border-radius: var(--radius); min-height: 60px;
+}
+.pool-chip {
+  background: var(--navy-card); border: 1px solid var(--border);
+  border-radius: 20px; padding: 4px 12px;
+  font-size: 12px; font-weight: 600;
+  cursor: grab; user-select: none;
+  transition: border-color .15s;
+}
+.pool-chip:hover { border-color: var(--red); }
+.pool-chip.drag-source { opacity: 0.4; }
+
+/* Grid controls */
+.grid-controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.grid-dim-input { width: 60px; }
+
+/* Color picker row */
+.color-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+.color-swatch {
+  width: 24px; height: 24px; border-radius: 50%; cursor: pointer;
+  border: 2px solid transparent; transition: border-color .15s;
+}
+.color-swatch.selected { border-color: var(--white); }
+
+/* API url bar */
+.api-bar {
+  background: var(--navy-mid);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 20px;
+}
+.api-bar .api-status { font-size: 12px; margin-top: 6px; }
+
+/* Section headers */
+.section-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px;
+}
+.section-header h2 {
+  font-family: var(--font-head);
+  font-size: 18px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .5px;
+}
+
+/* Span selector inside modal */
+.span-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.span-btn {
+  padding: 8px 4px; text-align: center;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  cursor: pointer; font-size: 12px; color: var(--gray-light);
+  background: var(--navy-mid); transition: all .15s;
+}
+.span-btn:hover, .span-btn.active { border-color: var(--red); background: rgba(204,0,0,.1); color: var(--white); }
+</style>
+</head>
+<body>
+
+<nav class="top-nav">
+  <a class="brand" href="dashboard.html">📊 LEAN CORNER</a>
+  <a href="dashboard.html">Dashboard</a>
+  <a href="data-entry.html">Data Entry</a>
+  <a href="setup.html" class="active">Setup</a>
+  <span class="spacer"></span>
+</nav>
+
+<div class="setup-layout">
+  <!-- SIDEBAR: Tab list -->
+  <div class="setup-sidebar">
+    <div>
+      <div class="flex items-center justify-between mb-2">
+        <span style="font-family:var(--font-head);font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray-light)">Dashboard Tabs</span>
+        <button class="btn btn-primary btn-sm" onclick="openTabModal()">+ Add</button>
+      </div>
+      <div id="tab-list" class="flex flex-col gap-2 mt-2"></div>
+    </div>
+    <div id="sidebar-hint" class="text-gray text-sm mt-2">Select a tab to configure its metrics and layout.</div>
+  </div>
+
+  <!-- MAIN AREA -->
+  <div class="setup-main">
+    <!-- API Config -->
+    <div class="api-bar">
+      <div class="flex items-center gap-3">
+        <div style="flex:1">
+          <label>Google Apps Script Web App URL</label>
+          <input id="api-url-input" type="url" placeholder="https://script.google.com/macros/s/.../exec" value="">
+        </div>
+        <button class="btn btn-secondary" onclick="saveApiUrl()" style="margin-top:20px">Save</button>
+        <button class="btn btn-ghost" onclick="testApi()" style="margin-top:20px">Test</button>
+      </div>
+      <div id="api-status" class="api-status text-gray">Enter your deployed Apps Script URL above to connect to Google Sheets.</div>
+    </div>
+
+    <!-- Tab config (shown when a tab is selected) -->
+    <div id="tab-config" class="hidden">
+      <div class="section-header">
+        <h2 id="tab-config-title">Tab Config</h2>
+        <div class="flex gap-2">
+          <button class="btn btn-ghost btn-sm" onclick="openTabModal(true)">Edit Tab</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteCurrentTab()">Delete Tab</button>
+        </div>
+      </div>
+
+      <!-- Metrics -->
+      <div class="card mb-3">
+        <div class="card-title flex items-center justify-between">
+          <span>Metrics</span>
+          <button class="btn btn-primary btn-sm" onclick="openMetricModal()">+ Add Metric</button>
+        </div>
+        <div id="metric-list" class="metric-list"></div>
+        <div id="metric-empty" class="text-gray text-sm mt-2 hidden">No metrics yet. Add one above.</div>
+      </div>
+
+      <!-- Layout builder -->
+      <div class="card">
+        <div class="card-title">Dashboard Layout</div>
+        <div class="grid-controls">
+          <div class="flex items-center gap-2">
+            <label style="margin:0;text-transform:none;font-size:12px">Columns</label>
+            <input type="number" id="grid-cols" class="grid-dim-input" min="1" max="8" value="3" onchange="rebuildGrid()">
+          </div>
+          <div class="flex items-center gap-2">
+            <label style="margin:0;text-transform:none;font-size:12px">Rows</label>
+            <input type="number" id="grid-rows" class="grid-dim-input" min="1" max="8" value="3" onchange="rebuildGrid()">
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="saveLayout()">💾 Save Layout</button>
+          <span class="text-gray text-sm">Drag metrics from the pool into cells</span>
+        </div>
+
+        <!-- Unplaced pool -->
+        <div class="mb-2">
+          <div class="text-gray text-sm mb-1">Unplaced metrics (drag onto grid)</div>
+          <div id="unplaced-pool" class="unplaced-pool"></div>
+        </div>
+
+        <!-- Grid -->
+        <div id="grid-builder" class="grid-builder">
+          <div id="grid-inner" class="grid-builder-inner"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty state -->
+    <div id="empty-state" class="flex flex-col items-center" style="padding-top:80px;gap:12px">
+      <div style="font-size:48px">📋</div>
+      <div style="font-family:var(--font-head);font-size:20px;font-weight:700">No Tab Selected</div>
+      <div class="text-gray">Add a tab in the sidebar or select one to configure it.</div>
+    </div>
+  </div>
+</div>
+
+<!-- Tab Modal -->
+<div id="tab-modal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-title" id="tab-modal-title">Add Dashboard Tab</div>
+    <div class="form-group">
+      <label>Tab Name (displayed as page title)</label>
+      <input id="tm-name" type="text" placeholder="e.g. Nike — Millington">
+    </div>
+    <div class="form-group">
+      <label>Customer / Client Name</label>
+      <input id="tm-customer" type="text" placeholder="e.g. Nike">
+    </div>
+    <div class="form-group">
+      <label>Tab Color (accent)</label>
+      <div class="color-row" id="tab-color-row">
+        <div class="color-swatch selected" style="background:#cc0000" data-color="#cc0000" onclick="selectTabColor(this)"></div>
+        <div class="color-swatch" style="background:#2563eb" data-color="#2563eb" onclick="selectTabColor(this)"></div>
+        <div class="color-swatch" style="background:#16a34a" data-color="#16a34a" onclick="selectTabColor(this)"></div>
+        <div class="color-swatch" style="background:#9333ea" data-color="#9333ea" onclick="selectTabColor(this)"></div>
+        <div class="color-swatch" style="background:#ea580c" data-color="#ea580c" onclick="selectTabColor(this)"></div>
+        <div class="color-swatch" style="background:#0891b2" data-color="#0891b2" onclick="selectTabColor(this)"></div>
+        <div class="color-swatch" style="background:#f59e0b" data-color="#f59e0b" onclick="selectTabColor(this)"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('tab-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTab()">Save Tab</button>
+    </div>
+  </div>
+</div>
+
+<!-- Metric Modal -->
+<div id="metric-modal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-title" id="metric-modal-title">Add Metric</div>
+    <div class="form-row" style="grid-template-columns:1fr 1fr">
+      <div class="form-group">
+        <label>Metric Name</label>
+        <input id="mm-name" type="text" placeholder="e.g. Dock to Stock">
+      </div>
+      <div class="form-group">
+        <label>Short Key (no spaces)</label>
+        <input id="mm-key" type="text" placeholder="e.g. dock_to_stock">
+      </div>
+    </div>
+    <div class="form-row" style="grid-template-columns:1fr 1fr">
+      <div class="form-group">
+        <label>Target Value</label>
+        <input id="mm-target" type="number" step="any" placeholder="e.g. 99">
+      </div>
+      <div class="form-group">
+        <label>Value Format</label>
+        <select id="mm-format">
+          <option value="percent">Percent (%)</option>
+          <option value="decimal">Decimal</option>
+          <option value="integer">Integer</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row" style="grid-template-columns:1fr 1fr">
+      <div class="form-group">
+        <label>Chart Type</label>
+        <select id="mm-chart">
+          <option value="bar">Bar Chart</option>
+          <option value="line">Line Chart</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Aggregation</label>
+        <select id="mm-agg">
+          <option value="avg">Average</option>
+          <option value="sum">Sum</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Target Direction</label>
+      <select id="mm-dir">
+        <option value="above">≥ Target is good (green)</option>
+        <option value="below">≤ Target is good (green)</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Bar Color</label>
+      <div class="color-row" id="metric-color-row">
+        <div class="color-swatch selected" style="background:#cc0000" data-color="#cc0000" onclick="selectMetricColor(this)"></div>
+        <div class="color-swatch" style="background:#2563eb" data-color="#2563eb" onclick="selectMetricColor(this)"></div>
+        <div class="color-swatch" style="background:#16a34a" data-color="#16a34a" onclick="selectMetricColor(this)"></div>
+        <div class="color-swatch" style="background:#f59e0b" data-color="#f59e0b" onclick="selectMetricColor(this)"></div>
+        <div class="color-swatch" style="background:#9333ea" data-color="#9333ea" onclick="selectMetricColor(this)"></div>
+        <div class="color-swatch" style="background:#0891b2" data-color="#0891b2" onclick="selectMetricColor(this)"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('metric-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveMetric()">Save Metric</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script src="js/shared.js"></script>
+<script>
+// ── State ─────────────────────────────────────────────────────
+let allTabs = [];
+let currentTabKey = null;
+let currentMetrics = [];
+let editingTabKey = null;
+let editingMetricKey = null;
+let selectedTabColor = '#cc0000';
+let selectedMetricColor = '#cc0000';
+
+// Grid state
+let gridLayout = {}; // cellIndex -> metricKey
+let gridCols = 3, gridRows = 3;
+let dragSource = null; // { type: 'pool'|'cell', key, cellIdx }
+
+// ── Init ──────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+  document.getElementById('api-url-input').value = localStorage.getItem('lc_api_url') || '';
+  await loadTabs();
+});
+
+async function loadTabs() {
+  try {
+    const cfg = await API.get('getConfig');
+    allTabs = cfg.tabs || [];
+    Config.set(cfg);
+    renderTabList();
+  } catch {
+    // Offline: use local cache
+    allTabs = Config.getTabs();
+    renderTabList();
+  }
+}
+
+function renderTabList() {
+  const el = document.getElementById('tab-list');
+  if (!allTabs.length) {
+    el.innerHTML = '<div class="text-gray text-sm">No tabs yet.</div>';
+    return;
+  }
+  el.innerHTML = allTabs.map(t => `
+    <div class="tab-item ${t.key === currentTabKey ? 'active' : ''}" onclick="selectTab('${t.key}')">
+      <div class="tab-dot" style="background:${t.color||'#cc0000'}"></div>
+      <div>
+        <div class="tab-name">${escHtml(t.name)}</div>
+        <div class="tab-customer">${escHtml(t.customer||'')}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function selectTab(key) {
+  currentTabKey = key;
+  renderTabList();
+  document.getElementById('empty-state').classList.add('hidden');
+  document.getElementById('tab-config').classList.remove('hidden');
+
+  const tab = allTabs.find(t => t.key === key);
+  document.getElementById('tab-config-title').textContent = tab?.name || key;
+
+  // Load metrics
+  try {
+    const res = await API.get('getMetrics', { tab: key });
+    currentMetrics = res.metrics || [];
+  } catch {
+    currentMetrics = [];
+    toast('Could not load metrics from server', 'error');
+  }
+  renderMetricList();
+
+  // Load layout
+  const layoutStr = localStorage.getItem('lc_layout_' + key);
+  const saved = layoutStr ? JSON.parse(layoutStr) : null;
+  gridCols = saved?.cols || tab?.gridCols || 3;
+  gridRows = saved?.rows || tab?.gridRows || 3;
+  gridLayout = saved?.layout || {};
+  document.getElementById('grid-cols').value = gridCols;
+  document.getElementById('grid-rows').value = gridRows;
+  rebuildGrid();
+}
+
+// ── Tab CRUD ──────────────────────────────────────────────────
+function openTabModal(editing = false) {
+  editingTabKey = null;
+  document.getElementById('tab-modal-title').textContent = 'Add Dashboard Tab';
+  document.getElementById('tm-name').value = '';
+  document.getElementById('tm-customer').value = '';
+  selectedTabColor = '#cc0000';
+  document.querySelectorAll('#tab-color-row .color-swatch').forEach(s => s.classList.toggle('selected', s.dataset.color === selectedTabColor));
+
+  if (editing && currentTabKey) {
+    const tab = allTabs.find(t => t.key === currentTabKey);
+    if (tab) {
+      editingTabKey = tab.key;
+      document.getElementById('tab-modal-title').textContent = 'Edit Tab';
+      document.getElementById('tm-name').value = tab.name;
+      document.getElementById('tm-customer').value = tab.customer || '';
+      selectedTabColor = tab.color || '#cc0000';
+      document.querySelectorAll('#tab-color-row .color-swatch').forEach(s => s.classList.toggle('selected', s.dataset.color === selectedTabColor));
+    }
+  }
+  document.getElementById('tab-modal').classList.add('open');
+}
+
+function selectTabColor(el) {
+  selectedTabColor = el.dataset.color;
+  document.querySelectorAll('#tab-color-row .color-swatch').forEach(s => s.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+async function saveTab() {
+  const name = document.getElementById('tm-name').value.trim();
+  const customer = document.getElementById('tm-customer').value.trim();
+  if (!name) { toast('Tab name is required', 'error'); return; }
+
+  const key = editingTabKey || name.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+  const tabDef = { key, name, customer, color: selectedTabColor };
+
+  try {
+    await API.post({ action: 'saveTab', data: tabDef });
+    const idx = allTabs.findIndex(t => t.key === key);
+    if (idx >= 0) allTabs[idx] = tabDef; else allTabs.push(tabDef);
+    Config.set({ tabs: allTabs });
+    renderTabList();
+    closeModal('tab-modal');
+    toast('Tab saved');
+    if (!currentTabKey) selectTab(key);
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function deleteCurrentTab() {
+  if (!currentTabKey) return;
+  if (!confirm('Delete this tab and all its data?')) return;
+  try {
+    await API.post({ action: 'deleteTab', tabName: currentTabKey });
+    allTabs = allTabs.filter(t => t.key !== currentTabKey);
+    Config.set({ tabs: allTabs });
+    currentTabKey = null;
+    currentMetrics = [];
+    renderTabList();
+    document.getElementById('tab-config').classList.add('hidden');
+    document.getElementById('empty-state').classList.remove('hidden');
+    toast('Tab deleted');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── Metric CRUD ───────────────────────────────────────────────
+function renderMetricList() {
+  const el = document.getElementById('metric-list');
+  const empty = document.getElementById('metric-empty');
+  if (!currentMetrics.length) {
+    el.innerHTML = '';
+    empty.classList.remove('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+  el.innerHTML = currentMetrics.map(m => `
+    <div class="metric-row">
+      <div>
+        <div class="metric-name">${escHtml(m.name)}</div>
+        <div class="metric-meta">Key: ${m.key} · Target: ${m.target ?? '—'} · ${m.format} · ${m.chartType||'bar'}</div>
+      </div>
+      <div class="metric-actions">
+        <button class="btn btn-ghost btn-sm" onclick="openMetricModal('${m.key}')">Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteMetric('${m.key}')">✕</button>
+      </div>
+    </div>
+  `).join('');
+  renderPool();
+}
+
+function openMetricModal(key = null) {
+  editingMetricKey = key;
+  selectedMetricColor = '#cc0000';
+  if (key) {
+    const m = currentMetrics.find(x => x.key === key);
+    document.getElementById('metric-modal-title').textContent = 'Edit Metric';
+    document.getElementById('mm-name').value = m.name;
+    document.getElementById('mm-key').value = m.key;
+    document.getElementById('mm-target').value = m.target ?? '';
+    document.getElementById('mm-format').value = m.format || 'percent';
+    document.getElementById('mm-chart').value = m.chartType || 'bar';
+    document.getElementById('mm-agg').value = m.agg || 'avg';
+    document.getElementById('mm-dir').value = m.dir || 'above';
+    selectedMetricColor = m.color || '#cc0000';
+  } else {
+    document.getElementById('metric-modal-title').textContent = 'Add Metric';
+    document.getElementById('mm-name').value = '';
+    document.getElementById('mm-key').value = '';
+    document.getElementById('mm-target').value = '';
+    document.getElementById('mm-format').value = 'percent';
+    document.getElementById('mm-chart').value = 'bar';
+    document.getElementById('mm-agg').value = 'avg';
+    document.getElementById('mm-dir').value = 'above';
+  }
+  document.querySelectorAll('#metric-color-row .color-swatch').forEach(s => s.classList.toggle('selected', s.dataset.color === selectedMetricColor));
+  document.getElementById('metric-modal').classList.add('open');
+}
+
+function selectMetricColor(el) {
+  selectedMetricColor = el.dataset.color;
+  document.querySelectorAll('#metric-color-row .color-swatch').forEach(s => s.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+// Auto-fill key from name
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('mm-name').addEventListener('input', function() {
+    if (!editingMetricKey) {
+      document.getElementById('mm-key').value = this.value.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+    }
+  });
+});
+
+async function saveMetric() {
+  const name = document.getElementById('mm-name').value.trim();
+  const key  = document.getElementById('mm-key').value.trim();
+  if (!name || !key) { toast('Name and key required', 'error'); return; }
+
+  const metricDef = {
+    key, name,
+    target:    document.getElementById('mm-target').value !== '' ? parseFloat(document.getElementById('mm-target').value) : null,
+    format:    document.getElementById('mm-format').value,
+    chartType: document.getElementById('mm-chart').value,
+    agg:       document.getElementById('mm-agg').value,
+    dir:       document.getElementById('mm-dir').value,
+    color:     selectedMetricColor,
+  };
+
+  try {
+    await API.post({ action: 'saveMetric', tabName: currentTabKey, data: metricDef });
+    const idx = currentMetrics.findIndex(m => m.key === key);
+    if (idx >= 0) currentMetrics[idx] = metricDef; else currentMetrics.push(metricDef);
+    renderMetricList();
+    rebuildGrid();
+    closeModal('metric-modal');
+    toast('Metric saved');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function deleteMetric(key) {
+  if (!confirm('Remove this metric and its data?')) return;
+  try {
+    await API.post({ action: 'deleteMetric', tabName: currentTabKey, metricKey: key });
+    currentMetrics = currentMetrics.filter(m => m.key !== key);
+    delete gridLayout[Object.keys(gridLayout).find(k => gridLayout[k] === key)];
+    renderMetricList();
+    rebuildGrid();
+    toast('Metric deleted');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── GRID LAYOUT BUILDER ───────────────────────────────────────
+function rebuildGrid() {
+  gridCols = parseInt(document.getElementById('grid-cols').value) || 3;
+  gridRows = parseInt(document.getElementById('grid-rows').value) || 3;
+  const totalCells = gridCols * gridRows;
+  const inner = document.getElementById('grid-inner');
+  inner.style.gridTemplateColumns = `repeat(${gridCols}, 1fr)`;
+  inner.style.gridTemplateRows    = `repeat(${gridRows}, minmax(80px, 1fr))`;
+  inner.innerHTML = '';
+
+  for (let i = 0; i < totalCells; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'grid-cell';
+    cell.dataset.cellIdx = i;
+    cell.textContent = `${Math.floor(i/gridCols)+1}×${(i%gridCols)+1}`;
+
+    const metricKey = gridLayout[i];
+    if (metricKey) {
+      const m = currentMetrics.find(x => x.key === metricKey);
+      if (m) {
+        cell.textContent = '';
+        cell.appendChild(buildTile(m, i));
+      }
+    }
+
+    // Drop zone events
+    cell.addEventListener('dragover', e => { e.preventDefault(); cell.classList.add('drag-over'); });
+    cell.addEventListener('dragleave', () => cell.classList.remove('drag-over'));
+    cell.addEventListener('drop', e => { e.preventDefault(); cell.classList.remove('drag-over'); handleDrop(i); });
+    inner.appendChild(cell);
+  }
+  renderPool();
+}
+
+function buildTile(m, cellIdx) {
+  const tile = document.createElement('div');
+  tile.className = 'chart-tile';
+  tile.draggable = true;
+  tile.innerHTML = `
+    <div class="tile-name" style="color:${m.color||'var(--gray-light)'}">${escHtml(m.name)}</div>
+    <div class="tile-target">${m.target != null ? 'Target: ' + m.target + (m.format==='percent'?'%':'') : ''}</div>
+    <button class="tile-remove" title="Remove from grid" onclick="removeTile(${cellIdx}, event)">✕</button>
+  `;
+  tile.addEventListener('dragstart', () => { dragSource = { type: 'cell', key: m.key, cellIdx }; tile.style.opacity = '.4'; });
+  tile.addEventListener('dragend', () => { tile.style.opacity = '1'; dragSource = null; });
+  return tile;
+}
+
+function renderPool() {
+  const placed = new Set(Object.values(gridLayout));
+  const unplaced = currentMetrics.filter(m => !placed.has(m.key));
+  const pool = document.getElementById('unplaced-pool');
+  pool.innerHTML = unplaced.length
+    ? unplaced.map(m => `<div class="pool-chip" draggable="true" data-key="${m.key}">${escHtml(m.name)}</div>`).join('')
+    : '<span class="text-gray text-sm">All metrics placed</span>';
+
+  pool.querySelectorAll('.pool-chip').forEach(chip => {
+    chip.addEventListener('dragstart', () => { dragSource = { type: 'pool', key: chip.dataset.key }; chip.classList.add('drag-source'); });
+    chip.addEventListener('dragend', () => { chip.classList.remove('drag-source'); dragSource = null; });
+  });
+
+  // Pool is also a drop zone (to remove from grid)
+  pool.addEventListener('dragover', e => { e.preventDefault(); pool.style.borderColor = 'var(--red)'; });
+  pool.addEventListener('dragleave', () => pool.style.borderColor = '');
+  pool.addEventListener('drop', e => {
+    e.preventDefault();
+    pool.style.borderColor = '';
+    if (dragSource?.type === 'cell') {
+      delete gridLayout[dragSource.cellIdx];
+      rebuildGrid();
+    }
+  });
+}
+
+function handleDrop(targetCellIdx) {
+  if (!dragSource) return;
+  if (dragSource.type === 'pool') {
+    // Check if this key already placed somewhere — swap
+    const existingCell = Object.keys(gridLayout).find(k => gridLayout[k] === dragSource.key);
+    if (existingCell !== undefined) delete gridLayout[existingCell];
+    const displaced = gridLayout[targetCellIdx];
+    gridLayout[targetCellIdx] = dragSource.key;
+    if (displaced && existingCell !== undefined) gridLayout[existingCell] = displaced;
+  } else if (dragSource.type === 'cell') {
+    const displaced = gridLayout[targetCellIdx];
+    gridLayout[targetCellIdx] = dragSource.key;
+    if (displaced) gridLayout[dragSource.cellIdx] = displaced;
+    else delete gridLayout[dragSource.cellIdx];
+  }
+  rebuildGrid();
+}
+
+function removeTile(cellIdx, e) {
+  e.stopPropagation();
+  delete gridLayout[cellIdx];
+  rebuildGrid();
+}
+
+async function saveLayout() {
+  const layoutData = { cols: gridCols, rows: gridRows, layout: gridLayout };
+  localStorage.setItem('lc_layout_' + currentTabKey, JSON.stringify(layoutData));
+
+  // Also save to tab definition on server
+  try {
+    const tab = allTabs.find(t => t.key === currentTabKey);
+    if (tab) {
+      tab.gridCols = gridCols;
+      tab.gridRows = gridRows;
+      tab.layout   = gridLayout;
+      await API.post({ action: 'saveTab', data: tab });
+    }
+    toast('Layout saved');
+  } catch (e) { toast('Saved locally (server error: ' + e.message + ')', 'error'); }
+}
+
+// ── API Config ────────────────────────────────────────────────
+function saveApiUrl() {
+  const url = document.getElementById('api-url-input').value.trim();
+  localStorage.setItem('lc_api_url', url);
+  // Update module-level reference
+  Object.defineProperty(window, 'API_URL', { value: url, writable: true, configurable: true });
+  localStorage.setItem('lc_api_url', url);
+  toast('API URL saved — click Test to verify');
+}
+
+async function testApi() {
+  const url = document.getElementById('api-url-input').value.trim();
+  if (!url) { toast('Enter a URL first', 'error'); return; }
+  localStorage.setItem('lc_api_url', url);
+  const status = document.getElementById('api-status');
+  status.textContent = 'Testing…';
+  try {
+    const res = await fetch(`${url}?action=getConfig`);
+    const json = await res.json();
+    status.textContent = '✅ Connected! Tabs found: ' + (json.tabs?.length ?? 0);
+    status.className = 'api-status text-green';
+    toast('Connection successful!');
+  } catch (e) {
+    status.textContent = '❌ Error: ' + e.message;
+    status.className = 'api-status text-red';
+    toast('Connection failed', 'error');
+  }
+}
+
+// ── Helpers ───────────────────────────────────────────────────
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+</script>
+</body>
+</html>

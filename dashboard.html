@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lean Corner Dashboard</title>
+<link rel="stylesheet" href="css/shared.css">
+<!-- Chart.js + datalabels plugin -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<style>
+/* ── OUTER CHROME ─────────────────────────────────────────── */
+body { overflow-x: hidden; }
+
+/* Dashboard header row */
+.dash-header {
+  background: var(--navy-mid);
+  border-bottom: 2px solid var(--red);
+  display: flex; align-items: center; gap: 0;
+  padding: 0;
+  position: sticky; top: 48px;
+  z-index: 90;
+  overflow-x: auto;
+  height: 44px;
+}
+
+/* Customer tabs */
+.dash-tab {
+  height: 100%; padding: 0 20px;
+  display: flex; align-items: center; gap: 8px;
+  cursor: pointer; font-weight: 700; font-size: 13px;
+  font-family: var(--font-head); letter-spacing: .5px;
+  text-transform: uppercase; color: var(--gray);
+  border-right: 1px solid var(--border);
+  white-space: nowrap; transition: all .15s;
+  position: relative;
+}
+.dash-tab:hover { color: var(--white); background: rgba(255,255,255,.04); }
+.dash-tab.active { color: var(--white); }
+.dash-tab.active::after {
+  content: '';
+  position: absolute; bottom: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--tab-color, var(--red));
+}
+.dash-tab .tab-dot { width: 7px; height: 7px; border-radius: 50%; }
+
+/* Controls bar */
+.controls-bar {
+  background: rgba(10,22,40,0.96);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 20px;
+  display: flex; align-items: center; gap: 12px;
+  flex-wrap: wrap;
+  position: sticky; top: 92px; z-index: 80;
+}
+.granularity-group { display: flex; gap: 2px; background: var(--navy-mid); border-radius: var(--radius); padding: 2px; }
+.gran-btn {
+  padding: 5px 12px; border-radius: 4px; cursor: pointer;
+  font-size: 12px; font-weight: 600; color: var(--gray-light);
+  transition: all .15s; border: none; background: transparent;
+}
+.gran-btn.active { background: var(--red); color: var(--white); }
+
+.date-range { display: flex; align-items: center; gap: 6px; }
+.date-range input { width: 130px; font-size: 12px; padding: 5px 8px; }
+.date-range label { font-size: 12px; font-weight: 600; color: var(--gray-light); text-transform: none; margin: 0; }
+
+/* ── DASHBOARD GRID ───────────────────────────────────────── */
+.dash-view { padding: 16px; }
+.dash-grid {
+  display: grid;
+  gap: 12px;
+}
+.chart-panel {
+  background: var(--navy-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  min-height: 200px;
+}
+.chart-panel-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  padding: 10px 14px 6px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.chart-panel-title {
+  font-family: var(--font-head);
+  font-weight: 700; font-size: 14px;
+  text-transform: uppercase; letter-spacing: .5px;
+  color: var(--white);
+}
+.chart-panel-target {
+  font-size: 11px; color: var(--gray);
+  margin-top: 2px;
+}
+.chart-panel-avg {
+  font-family: var(--font-head);
+  font-size: 22px; font-weight: 800;
+  text-align: right; line-height: 1;
+}
+.chart-panel-avg .avg-label { font-size: 10px; color: var(--gray); font-weight: 400; display: block; font-family: var(--font-body); }
+.chart-panel-body {
+  flex: 1; padding: 10px 12px 8px;
+  position: relative; min-height: 0;
+}
+.chart-panel-body canvas { display: block; }
+
+/* KPI gauge row (for 1-cell panels) */
+.gauge-row {
+  display: flex; align-items: center; justify-content: center;
+  padding: 12px; flex: 1;
+}
+.kpi-gauge {
+  position: relative;
+  width: 100px; height: 55px;
+}
+.kpi-gauge svg { width: 100%; height: auto; }
+.kpi-val {
+  position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+  font-family: var(--font-head); font-weight: 800; font-size: 18px;
+  color: var(--white); white-space: nowrap;
+}
+
+/* Loading / error states */
+.panel-loading {
+  display: flex; align-items: center; justify-content: center;
+  flex: 1; gap: 8px; color: var(--gray); font-size: 13px;
+}
+.panel-error { color: #ff6666; font-size: 12px; padding: 12px; }
+
+/* Empty dashboard */
+.dash-empty {
+  text-align: center; padding: 80px 20px;
+  color: var(--gray);
+}
+.dash-empty h2 { font-family: var(--font-head); font-size: 24px; color: var(--gray-light); margin: 12px 0 8px; }
+
+/* Dashboard branding */
+.dash-brand {
+  display: flex; align-items: center; gap: 10px;
+  padding: 0 16px;
+  flex-shrink: 0;
+}
+.dash-brand .brand-title {
+  font-family: var(--font-head); font-size: 22px; font-weight: 800;
+  letter-spacing: 1px; color: var(--white); text-transform: uppercase;
+}
+.spacer-v { flex: 1; }
+
+/* Fullscreen-friendly tweaks */
+.fullscreen-btn {
+  background: transparent; border: 1px solid var(--border);
+  color: var(--gray-light); border-radius: var(--radius);
+  padding: 4px 8px; cursor: pointer; font-size: 13px;
+  transition: all .15s;
+}
+.fullscreen-btn:hover { background: var(--navy-light); color: var(--white); }
+</style>
+</head>
+<body>
+
+<nav class="top-nav">
+  <a class="brand" href="dashboard.html">📊 LEAN CORNER</a>
+  <a href="dashboard.html" class="active">Dashboard</a>
+  <a href="data-entry.html">Data Entry</a>
+  <a href="setup.html">Setup</a>
+  <span class="spacer"></span>
+</nav>
+
+<!-- Customer tab row -->
+<div class="dash-header" id="dash-header">
+  <div id="dash-tabs"></div>
+  <div class="spacer-v"></div>
+  <button class="fullscreen-btn" onclick="toggleFullscreen()" style="margin-right:12px" title="Fullscreen">⛶</button>
+</div>
+
+<!-- Controls bar -->
+<div class="controls-bar">
+  <div class="granularity-group">
+    <button class="gran-btn active" data-gran="day"   onclick="setGranularity('day',   this)">Day</button>
+    <button class="gran-btn"        data-gran="week"  onclick="setGranularity('week',  this)">Week</button>
+    <button class="gran-btn"        data-gran="month" onclick="setGranularity('month', this)">Month</button>
+    <button class="gran-btn"        data-gran="year"  onclick="setGranularity('year',  this)">Year</button>
+  </div>
+  <div class="date-range">
+    <label>From</label>
+    <input type="date" id="filter-from" onchange="refreshCurrentTab()">
+    <label>To</label>
+    <input type="date" id="filter-to" onchange="refreshCurrentTab()">
+    <button class="btn btn-ghost btn-sm" onclick="clearDateFilter()">All</button>
+  </div>
+  <button class="btn btn-secondary btn-sm" onclick="refreshCurrentTab()">↺ Refresh</button>
+  <span id="dash-tab-label" style="font-family:var(--font-head);font-size:16px;font-weight:700;margin-left:8px;color:var(--white)"></span>
+</div>
+
+<!-- Dashboard content area -->
+<div class="dash-view" id="dash-view">
+  <div class="dash-empty" id="no-tabs-state">
+    <div style="font-size:56px">📊</div>
+    <h2>No Dashboards Configured</h2>
+    <p>Go to <a href="setup.html" style="color:var(--red)">Setup</a> to add customer tabs and metrics.</p>
+  </div>
+  <div id="tab-content"></div>
+</div>
+
+<div id="toast-container"></div>
+
+<script src="js/shared.js"></script>
+<script>
+// Register datalabels plugin globally
+Chart.register(ChartDataLabels);
+
+// ── State ─────────────────────────────────────────────────────
+let allTabs = [];
+let currentTabKey = null;
+let granularity = 'day';
+let tabDataCache = {}; // tabKey -> { metrics, data }
+
+// ── Init ──────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+  // Seed date filter: last 13 months by default
+  const today = new Date();
+  const from = new Date(today);
+  from.setMonth(from.getMonth() - 13);
+  document.getElementById('filter-to').value = DateUtils.toISO(today);
+  document.getElementById('filter-from').value = DateUtils.toISO(from);
+
+  await loadConfig();
+});
+
+async function loadConfig() {
+  try {
+    const cfg = await API.get('getConfig');
+    allTabs = cfg.tabs || [];
+    Config.set(cfg);
+  } catch {
+    allTabs = Config.getTabs();
+    if (!allTabs.length) {
+      toast('Not connected to server. Check Setup.', 'error');
+    }
+  }
+  renderTabBar();
+  if (allTabs.length) selectTab(allTabs[0].key);
+  else document.getElementById('no-tabs-state').style.display = '';
+}
+
+// ── TAB BAR ───────────────────────────────────────────────────
+function renderTabBar() {
+  const container = document.getElementById('dash-tabs');
+  container.innerHTML = allTabs.map(t => `
+    <div class="dash-tab" data-key="${t.key}" style="--tab-color:${t.color||'var(--red)'}" onclick="selectTab('${t.key}')">
+      <div class="tab-dot" style="background:${t.color||'var(--red)'}"></div>
+      ${escHtml(t.name)}
+    </div>
+  `).join('');
+  if (!allTabs.length) document.getElementById('no-tabs-state').style.display = '';
+}
+
+async function selectTab(key) {
+  currentTabKey = key;
+  document.querySelectorAll('.dash-tab').forEach(t => t.classList.toggle('active', t.dataset.key === key));
+  const tab = allTabs.find(t => t.key === key);
+  document.getElementById('dash-tab-label').textContent = tab?.name || '';
+  document.getElementById('no-tabs-state').style.display = 'none';
+  await loadTabData(key);
+}
+
+// ── DATA LOADING ──────────────────────────────────────────────
+async function loadTabData(tabKey) {
+  const content = document.getElementById('tab-content');
+  content.innerHTML = '<div class="panel-loading" style="padding:60px"><span class="spinner"></span> Loading data…</div>';
+
+  try {
+    // Load metrics + all data in parallel
+    const [metricsRes, dataRes] = await Promise.all([
+      API.get('getMetrics', { tab: tabKey }),
+      API.get('getAllData', { tab: tabKey }),
+    ]);
+    tabDataCache[tabKey] = {
+      metrics: metricsRes.metrics || [],
+      rawData: dataRes.data || {},
+    };
+  } catch (e) {
+    content.innerHTML = `<div class="panel-error">Error loading data: ${e.message}<br><small>Check that your Apps Script URL is configured in Setup.</small></div>`;
+    return;
+  }
+
+  renderDashboard(tabKey);
+}
+
+function refreshCurrentTab() {
+  if (currentTabKey) loadTabData(currentTabKey);
+}
+
+// ── RENDER ────────────────────────────────────────────────────
+function renderDashboard(tabKey) {
+  const content = document.getElementById('tab-content');
+  const cache = tabDataCache[tabKey];
+  if (!cache) return;
+
+  const { metrics, rawData } = cache;
+  const tab = allTabs.find(t => t.key === tabKey);
+
+  if (!metrics.length) {
+    content.innerHTML = `<div class="dash-empty"><div style="font-size:40px">📋</div><h2>No Metrics Configured</h2><p>Add metrics in <a href="setup.html" style="color:var(--red)">Setup</a>.</p></div>`;
+    return;
+  }
+
+  // Load layout from local storage or tab definition
+  const layoutStr = localStorage.getItem('lc_layout_' + tabKey);
+  const savedLayout = layoutStr ? JSON.parse(layoutStr) : null;
+  const gridCols = savedLayout?.cols || tab?.gridCols || 3;
+  const gridRows = savedLayout?.rows || tab?.gridRows || Math.ceil(metrics.length / 3);
+  const layoutMap = savedLayout?.layout || tab?.layout || {};
+
+  // Build ordered metric keys from layout
+  const totalCells = gridCols * gridRows;
+  const placedKeys = [];
+  for (let i = 0; i < totalCells; i++) {
+    if (layoutMap[i]) placedKeys.push(layoutMap[i]);
+  }
+  // Add unplaced at end
+  metrics.forEach(m => { if (!placedKeys.includes(m.key)) placedKeys.push(m.key); });
+
+  // Build grid
+  content.innerHTML = `<div class="dash-grid" id="rendered-grid" style="grid-template-columns:repeat(${gridCols},1fr)"></div>`;
+  const grid = document.getElementById('rendered-grid');
+
+  // Fill in layout cells
+  for (let i = 0; i < totalCells; i++) {
+    const mKey = layoutMap[i];
+    const m = mKey ? metrics.find(x => x.key === mKey) : null;
+    const panel = buildPanel(m, rawData[mKey] || [], tab?.color);
+    grid.appendChild(panel);
+  }
+
+  // Any unplaced metrics go below
+  const unplacedMetrics = metrics.filter(m => !Object.values(layoutMap).includes(m.key));
+  if (unplacedMetrics.length) {
+    const overflow = document.createElement('div');
+    overflow.style.cssText = `grid-column:1/-1;display:grid;grid-template-columns:repeat(${gridCols},1fr);gap:12px;margin-top:0`;
+    unplacedMetrics.forEach(m => overflow.appendChild(buildPanel(m, rawData[m.key] || [], tab?.color)));
+    grid.after(overflow);
+  }
+}
+
+function buildPanel(metric, rawPoints, tabColor) {
+  const panel = document.createElement('div');
+  panel.className = 'chart-panel';
+
+  if (!metric) {
+    panel.style.background = 'rgba(255,255,255,.02)';
+    panel.style.border = '1px dashed rgba(255,255,255,.06)';
+    panel.style.minHeight = '200px';
+    return panel;
+  }
+
+  // Filter by date range
+  const fromVal = document.getElementById('filter-from').value;
+  const toVal   = document.getElementById('filter-to').value;
+  let points = rawPoints.filter(p => {
+    if (fromVal && p.date < fromVal) return false;
+    if (toVal   && p.date > toVal)   return false;
+    return true;
+  });
+  points.sort((a,b) => a.date.localeCompare(b.date));
+
+  // Aggregate
+  const grouped = DateUtils.aggregatePoints(points, granularity, metric.agg || 'avg');
+  const labels = grouped.map(g => DateUtils.label(g.groupKey, granularity));
+  const values = grouped.map(g => g.value);
+
+  // Compute overall average for KPI
+  const validVals = values.filter(v => v !== null);
+  const avg = validVals.length ? validVals.reduce((a,b)=>a+b,0)/validVals.length : null;
+
+  // Determine avg color
+  const target = metric.target;
+  const dir = metric.dir || 'above';
+  let avgColor = 'var(--white)';
+  if (avg !== null && target !== null && target !== undefined) {
+    const good = dir === 'above' ? avg >= target : avg <= target;
+    avgColor = good ? '#4ade80' : '#ff6666';
+  }
+
+  panel.innerHTML = `
+    <div class="chart-panel-header">
+      <div>
+        <div class="chart-panel-title">${escHtml(metric.name)}</div>
+        ${target != null ? `<div class="chart-panel-target">Target: ${fmtVal(target, metric.format)}</div>` : ''}
+      </div>
+      <div class="chart-panel-avg" style="color:${avgColor}">
+        ${avg !== null ? fmtVal(avg, metric.format) : '—'}
+        <span class="avg-label">Avg</span>
+      </div>
+    </div>
+    <div class="chart-panel-body">
+      ${grouped.length
+        ? `<canvas id="chart-${metric.key}" style="width:100%;height:100%"></canvas>`
+        : `<div class="panel-loading"><span style="color:var(--gray);font-size:12px">No data in selected range</span></div>`
+      }
+    </div>
+  `;
+
+  if (grouped.length) {
+    // Draw chart after DOM insert
+    requestAnimationFrame(() => {
+      const canvas = document.getElementById('chart-' + metric.key);
+      if (!canvas) return;
+      // Size canvas to parent
+      canvas.style.height = '100%';
+      buildChart(canvas, {
+        labels, values,
+        target: metric.target,
+        format: metric.format,
+        chartType: metric.chartType || 'bar',
+        color: metric.color || tabColor || '#cc0000',
+      });
+    });
+  }
+
+  return panel;
+}
+
+// ── GRANULARITY ───────────────────────────────────────────────
+function setGranularity(gran, btn) {
+  granularity = gran;
+  document.querySelectorAll('.gran-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (currentTabKey && tabDataCache[currentTabKey]) renderDashboard(currentTabKey);
+}
+
+function clearDateFilter() {
+  document.getElementById('filter-from').value = '';
+  document.getElementById('filter-to').value = '';
+  refreshCurrentTab();
+}
+
+// ── FULLSCREEN ────────────────────────────────────────────────
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(() => {});
+  } else {
+    document.exitFullscreen();
+  }
+}
+
+function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+</script>
+</body>
+</html>
